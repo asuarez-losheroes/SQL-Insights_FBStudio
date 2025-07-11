@@ -11,6 +11,7 @@ import {
   ShieldAlert,
   EyeOff,
   Sparkles,
+  FileUp,
 } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
@@ -49,6 +50,7 @@ import { mockDatabases } from '@/lib/mock-data';
 import type { Database } from '@/lib/types';
 import RecommendationModal from './recommendation-modal';
 import FileUploadDialog from './file-upload-dialog';
+import DatabaseFormDialog from './database-form-dialog';
 
 export default function DashboardClient() {
   const [databases, setDatabases] = React.useState<Database[]>(mockDatabases);
@@ -62,9 +64,10 @@ export default function DashboardClient() {
   
   // Modal states
   const [selectedDb, setSelectedDb] = React.useState<Database | null>(null);
+  const [editingDb, setEditingDb] = React.useState<Database | null>(null);
   const [isRecommendationModalOpen, setRecommendationModalOpen] = React.useState(false);
   const [isFileUploadDialogOpen, setFileUploadDialogOpen] = React.useState(false);
-
+  const [isFormDialogOpen, setFormDialogOpen] = React.useState(false);
 
   React.useEffect(() => {
     let result = databases;
@@ -91,6 +94,28 @@ export default function DashboardClient() {
     setSelectedDb(db);
     setRecommendationModalOpen(true);
   };
+
+  const handleCreate = () => {
+    setEditingDb(null);
+    setFormDialogOpen(true);
+  };
+
+  const handleEdit = (db: Database) => {
+    setEditingDb(db);
+    setFormDialogOpen(true);
+  };
+
+  const handleSave = (values: Database) => {
+    if (editingDb) {
+      // Update existing
+      setDatabases(databases.map(db => db.id === values.id ? values : db));
+    } else {
+      // Create new
+      const newDb = { ...values, id: `db-${Date.now()}` };
+      setDatabases([...databases, newDb]);
+    }
+  };
+
 
   const exportToCsv = () => {
     const headers = Object.keys(filteredDatabases[0]);
@@ -217,11 +242,17 @@ export default function DashboardClient() {
                         Exportar
                     </span>
                     </Button>
-                    <Button size="sm" className="h-8 gap-1" onClick={() => setFileUploadDialogOpen(true)}>
-                    <PlusCircle className="h-3.5 w-3.5" />
-                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                        Importar Datos
-                    </span>
+                    <Button size="sm" variant="outline" className="h-8 gap-1" onClick={() => setFileUploadDialogOpen(true)}>
+                      <FileUp className="h-3.5 w-3.5" />
+                      <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                          Importar Datos
+                      </span>
+                    </Button>
+                    <Button size="sm" className="h-8 gap-1" onClick={handleCreate}>
+                      <PlusCircle className="h-3.5 w-3.5" />
+                      <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                          Crear Base de Datos
+                      </span>
                     </Button>
                 </div>
             </div>
@@ -269,7 +300,7 @@ export default function DashboardClient() {
                         <DropdownMenuItem onSelect={() => handleGetRecommendations(db)}>
                           <Sparkles className="mr-2 h-4 w-4" /> Obtener Recomendaciones de IA
                         </DropdownMenuItem>
-                        <DropdownMenuItem>Editar</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleEdit(db)}>Editar</DropdownMenuItem>
                         <DropdownMenuItem>Eliminar</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -292,6 +323,13 @@ export default function DashboardClient() {
       <FileUploadDialog
         isOpen={isFileUploadDialogOpen}
         onOpenChange={setFileUploadDialogOpen}
+      />
+
+      <DatabaseFormDialog
+        isOpen={isFormDialogOpen}
+        onOpenChange={setFormDialogOpen}
+        onSave={handleSave}
+        database={editingDb}
       />
     </>
   );
