@@ -1,0 +1,21 @@
+export type Database = {
+  id: string;
+  Company: string;
+  Location: string;
+  'Operational Status': 'Online' | 'Offline' | 'Unknown';
+  'Backed up': 'Yes' | 'No';
+  Contingency: 'Yes' | 'No';
+  Environment: 'Production' | 'Development' | 'Staging' | 'Contingency';
+  Critical: 'Yes' | 'No';
+  Monitored: 'Yes' | 'No';
+  'IP Address': string;
+  'Support Group': string;
+  'Name Instance': string;
+  'BD Name': string;
+  'Name Server': string;
+  'Is Clustered': 'Yes' | 'No';
+  Class: string;
+  Edition: string;
+  Engine: string;
+  License: string;
+};
