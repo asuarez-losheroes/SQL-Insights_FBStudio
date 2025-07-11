@@ -108,7 +108,7 @@ export default function DashboardClient() {
     const a = document.createElement('a');
     a.setAttribute('hidden', '');
     a.setAttribute('href', url);
-    a.setAttribute('download', 'sql_inventory.csv');
+    a.setAttribute('download', 'inventario_sql.csv');
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -128,7 +128,7 @@ export default function DashboardClient() {
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Databases</CardTitle>
+            <CardTitle className="text-sm font-medium">Bases de Datos Totales</CardTitle>
             <Server className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -137,7 +137,7 @@ export default function DashboardClient() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Production</CardTitle>
+            <CardTitle className="text-sm font-medium">Producción</CardTitle>
             <HeartPulse className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -146,7 +146,7 @@ export default function DashboardClient() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Critical</CardTitle>
+            <CardTitle className="text-sm font-medium">Críticas</CardTitle>
             <ShieldAlert className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -155,7 +155,7 @@ export default function DashboardClient() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Unmonitored</CardTitle>
+            <CardTitle className="text-sm font-medium">No Monitoreadas</CardTitle>
             <EyeOff className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -168,8 +168,8 @@ export default function DashboardClient() {
         <CardHeader>
             <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                    <h2 className="text-lg font-semibold">Database Inventory</h2>
-                    <Input placeholder="Search databases..." value={search} onChange={e => setSearch(e.target.value)} className="w-64" />
+                    <h2 className="text-lg font-semibold">Inventario de Bases de Datos</h2>
+                    <Input placeholder="Buscar bases de datos..." value={search} onChange={e => setSearch(e.target.value)} className="w-64" />
                 </div>
                 <div className="flex items-center gap-2">
                     <DropdownMenu>
@@ -177,37 +177,37 @@ export default function DashboardClient() {
                         <Button variant="outline" size="sm" className="h-8 gap-1">
                         <ListFilter className="h-3.5 w-3.5" />
                         <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                            Filter
+                            Filtrar
                         </span>
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Filter by</DropdownMenuLabel>
+                        <DropdownMenuLabel>Filtrar por</DropdownMenuLabel>
                         <div className="p-2 space-y-2">
                             <Select value={environment} onValueChange={setEnvironment}>
-                                <SelectTrigger><SelectValue placeholder="Environment" /></SelectTrigger>
+                                <SelectTrigger><SelectValue placeholder="Entorno" /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">All Environments</SelectItem>
-                                    <SelectItem value="Production">Production</SelectItem>
-                                    <SelectItem value="Development">Development</SelectItem>
-                                    <SelectItem value="Staging">Staging</SelectItem>
-                                    <SelectItem value="Contingency">Contingency</SelectItem>
+                                    <SelectItem value="all">Todos los Entornos</SelectItem>
+                                    <SelectItem value="Production">Producción</SelectItem>
+                                    <SelectItem value="Development">Desarrollo</SelectItem>
+                                    <SelectItem value="Staging">Pruebas</SelectItem>
+                                    <SelectItem value="Contingency">Contingencia</SelectItem>
                                 </SelectContent>
                             </Select>
                             <Select value={criticality} onValueChange={setCriticality}>
-                                <SelectTrigger><SelectValue placeholder="Criticality" /></SelectTrigger>
+                                <SelectTrigger><SelectValue placeholder="Criticidad" /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">All Criticality</SelectItem>
-                                    <SelectItem value="Yes">Critical</SelectItem>
-                                    <SelectItem value="No">Not Critical</SelectItem>
+                                    <SelectItem value="all">Toda la Criticidad</SelectItem>
+                                    <SelectItem value="Yes">Crítico</SelectItem>
+                                    <SelectItem value="No">No Crítico</SelectItem>
                                 </SelectContent>
                             </Select>
                              <Select value={monitoring} onValueChange={setMonitoring}>
-                                <SelectTrigger><SelectValue placeholder="Monitoring" /></SelectTrigger>
+                                <SelectTrigger><SelectValue placeholder="Monitoreo" /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">All Monitoring</SelectItem>
-                                    <SelectItem value="Yes">Monitored</SelectItem>
-                                    <SelectItem value="No">Not Monitored</SelectItem>
+                                    <SelectItem value="all">Todo el Monitoreo</SelectItem>
+                                    <SelectItem value="Yes">Monitoreado</SelectItem>
+                                    <SelectItem value="No">No Monitoreado</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -216,13 +216,13 @@ export default function DashboardClient() {
                     <Button size="sm" variant="outline" className="h-8 gap-1" onClick={exportToCsv}>
                     <Download className="h-3.5 w-3.5" />
                     <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                        Export
+                        Exportar
                     </span>
                     </Button>
                     <Button size="sm" className="h-8 gap-1" onClick={() => setFileUploadDialogOpen(true)}>
                     <PlusCircle className="h-3.5 w-3.5" />
                     <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                        Import Data
+                        Importar Datos
                     </span>
                     </Button>
                 </div>
@@ -232,14 +232,14 @@ export default function DashboardClient() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Database Name</TableHead>
-                <TableHead>Server</TableHead>
-                <TableHead>Environment</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Critical</TableHead>
-                <TableHead>Monitored</TableHead>
+                <TableHead>Nombre de BD</TableHead>
+                <TableHead>Servidor</TableHead>
+                <TableHead>Entorno</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead>Crítica</TableHead>
+                <TableHead>Monitoreada</TableHead>
                 <TableHead>
-                  <span className="sr-only">Actions</span>
+                  <span className="sr-only">Acciones</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -263,16 +263,16 @@ export default function DashboardClient() {
                       <DropdownMenuTrigger asChild>
                         <Button aria-haspopup="true" size="icon" variant="ghost">
                           <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
+                          <span className="sr-only">Alternar menú</span>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                         <DropdownMenuItem onSelect={() => handleGetRecommendations(db)}>
-                          <Sparkles className="mr-2 h-4 w-4" /> Get AI Recommendations
+                          <Sparkles className="mr-2 h-4 w-4" /> Obtener Recomendaciones de IA
                         </DropdownMenuItem>
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                        <DropdownMenuItem>Delete</DropdownMenuItem>
+                        <DropdownMenuItem>Editar</DropdownMenuItem>
+                        <DropdownMenuItem>Eliminar</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

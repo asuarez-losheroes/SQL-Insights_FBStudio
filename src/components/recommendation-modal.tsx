@@ -86,11 +86,12 @@ export default function RecommendationModal({
       setRecommendations(result);
     } catch (e) {
       console.error(e);
-      setError('Failed to fetch AI recommendations. Please try again.');
+      const errorMessage = 'No se pudieron obtener las recomendaciones de IA. Por favor, inténtalo de nuevo.';
+      setError(errorMessage);
        toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to fetch AI recommendations. Please try again.",
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);
@@ -114,9 +115,9 @@ export default function RecommendationModal({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>AI Recommendations for {database?.['BD Name']}</DialogTitle>
+          <DialogTitle>Recomendaciones de IA para {database?.['BD Name']}</DialogTitle>
           <DialogDescription>
-            AI-powered suggestions for maintenance and upgrades for the selected database.
+            Sugerencias impulsadas por IA para mantenimiento y actualizaciones de la base de datos seleccionada.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">
@@ -128,7 +129,7 @@ export default function RecommendationModal({
               <AlertDescription>
                 {error}
                 <Button variant="secondary" size="sm" onClick={fetchRecommendations} className="mt-2">
-                  Retry
+                  Reintentar
                 </Button>
               </AlertDescription>
             </Alert>
@@ -137,7 +138,7 @@ export default function RecommendationModal({
             <div className="space-y-4">
                <Alert>
                 <Terminal className="h-4 w-4" />
-                <AlertTitle>Overall Assessment</AlertTitle>
+                <AlertTitle>Evaluación General</AlertTitle>
                 <AlertDescription>
                   {recommendations.recommendations.overallAssessment}
                 </AlertDescription>
@@ -145,7 +146,7 @@ export default function RecommendationModal({
 
               <Accordion type="multiple" className="w-full">
                 <AccordionItem value="maintenance">
-                  <AccordionTrigger>Maintenance Tasks ({recommendations.recommendations.maintenanceTasks.length})</AccordionTrigger>
+                  <AccordionTrigger>Tareas de Mantenimiento ({recommendations.recommendations.maintenanceTasks.length})</AccordionTrigger>
                   <AccordionContent>
                     <ul className="list-disc space-y-2 pl-5">
                       {recommendations.recommendations.maintenanceTasks.map((item, index) => (
@@ -157,7 +158,7 @@ export default function RecommendationModal({
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="upgrades">
-                  <AccordionTrigger>Upgrade Tasks ({recommendations.recommendations.upgradeTasks.length})</AccordionTrigger>
+                  <AccordionTrigger>Tareas de Actualización ({recommendations.recommendations.upgradeTasks.length})</AccordionTrigger>
                   <AccordionContent>
                     <ul className="list-disc space-y-2 pl-5">
                       {recommendations.recommendations.upgradeTasks.map((item, index) => (

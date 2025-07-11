@@ -12,43 +12,43 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const DatabaseRecommendationsInputSchema = z.object({
-  company: z.string().describe('The name of the company.'),
-  location: z.string().describe('The location of the database.'),
-  operationalStatus: z.string().describe('The operational status of the database.'),
-  backedUp: z.string().describe('Whether the database is backed up.'),
-  contingency: z.string().describe('The contingency status of the database.'),
-  environment: z.string().describe('The environment of the database (e.g., Production, Development).'),
-  critical: z.string().describe('Whether the database is critical.'),
-  monitored: z.string().describe('Whether the database is monitored.'),
-  ipAddress: z.string().describe('The IP address of the database server.'),
-  supportGroup: z.string().describe('The support group responsible for the database.'),
-  nameInstance: z.string().describe('The name of the database instance.'),
-  bdName: z.string().describe('The name of the database.'),
-  nameServer: z.string().describe('The name of the database server.'),
-  isClustered: z.string().describe('Whether the database is clustered.'),
-  class: z.string().describe('The class of the database.'),
-  edition: z.string().describe('The edition of the database.'),
-  engine: z.string().describe('The engine of the database.'),
-  license: z.string().describe('The license of the database.'),
+  company: z.string().describe('El nombre de la empresa.'),
+  location: z.string().describe('La ubicación de la base de datos.'),
+  operationalStatus: z.string().describe('El estado operativo de la base de datos.'),
+  backedUp: z.string().describe('Si la base de datos está respaldada.'),
+  contingency: z.string().describe('El estado de contingencia de la base de datos.'),
+  environment: z.string().describe('El entorno de la base de datos (p. ej., Producción, Desarrollo).'),
+  critical: z.string().describe('Si la base de datos es crítica.'),
+  monitored: z.string().describe('Si la base de datos está monitoreada.'),
+  ipAddress: z.string().describe('La dirección IP del servidor de la base de datos.'),
+  supportGroup: z.string().describe('El grupo de soporte responsable de la base de datos.'),
+  nameInstance: z.string().describe('El nombre de la instancia de la base de datos.'),
+  bdName: z.string().describe('El nombre de la base de datos.'),
+  nameServer: z.string().describe('El nombre del servidor de la base de datos.'),
+  isClustered: z.string().describe('Si la base de datos está en clúster.'),
+  class: z.string().describe('La clase de la base de datos.'),
+  edition: z.string().describe('La edición de la base de datos.'),
+  engine: z.string().describe('El motor de la base de datos.'),
+  license: z.string().describe('La licencia de la base de datos.'),
 });
 export type DatabaseRecommendationsInput = z.infer<typeof DatabaseRecommendationsInputSchema>;
 
 const MaintenanceTaskSchema = z.object({
-  task: z.string().describe('Specific maintenance task to be performed.'),
-  reason: z.string().describe('Reasoning behind the need of this task.'),
+  task: z.string().describe('Tarea de mantenimiento específica a realizar.'),
+  reason: z.string().describe('Justificación de la necesidad de esta tarea.'),
 });
 
 const UpgradeTaskSchema = z.object({
-  task: z.string().describe('Specific upgrade task to be performed.'),
-  reason: z.string().describe('Reasoning behind the need of this task.'),
+  task: z.string().describe('Tarea de actualización específica a realizar.'),
+  reason: z.string().describe('Justificación de la necesidad de esta tarea.'),
 });
 
 const DatabaseRecommendationsOutputSchema = z.object({
   recommendations: z.object({
-    maintenanceTasks: z.array(MaintenanceTaskSchema).describe('Recommendations for database maintenance tasks.'),
-    upgradeTasks: z.array(UpgradeTaskSchema).describe('Recommendations for database upgrade tasks.'),
-    overallAssessment: z.string().describe('Overall assessment of the database health and recommendations.'),
-  }).describe('AI-driven recommendations for database maintenance and upgrades.'),
+    maintenanceTasks: z.array(MaintenanceTaskSchema).describe('Recomendaciones para tareas de mantenimiento de la base de datos.'),
+    upgradeTasks: z.array(UpgradeTaskSchema).describe('Recomendaciones para tareas de actualización de la base de datos.'),
+    overallAssessment: z.string().describe('Evaluación general de la salud de la base de datos y recomendaciones.'),
+  }).describe('Recomendaciones impulsadas por IA para el mantenimiento y actualización de bases de datos.'),
 });
 export type DatabaseRecommendationsOutput = z.infer<typeof DatabaseRecommendationsOutputSchema>;
 
@@ -60,34 +60,35 @@ const databaseRecommendationsPrompt = ai.definePrompt({
   name: 'databaseRecommendationsPrompt',
   input: {schema: DatabaseRecommendationsInputSchema},
   output: {schema: DatabaseRecommendationsOutputSchema},
-  prompt: `You are an expert database administrator providing recommendations for SQL Server database maintenance and upgrades. 
+  prompt: `Eres un experto administrador de bases de datos que proporciona recomendaciones para el mantenimiento y actualización de bases de datos SQL Server.
+  Tus respuestas deben estar en español.
 
-  Based on the following database information, provide actionable recommendations for maintenance and upgrades. 
+  Basándote en la siguiente información de la base de datos, proporciona recomendaciones accionables para mantenimiento y actualizaciones.
 
-  Include specific maintenance tasks, upgrade tasks, and an overall assessment of the database health.
+  Incluye tareas específicas de mantenimiento, tareas de actualización y una evaluación general de la salud de la base de datos.
 
-  Consider factors like environment, criticality, backup status, and monitoring.
+  Considera factores como el entorno, la criticidad, el estado de las copias de seguridad y el monitoreo.
 
-  Company: {{{company}}}
-  Location: {{{location}}}
-  Operational Status: {{{operationalStatus}}}
-  Backed up: {{{backedUp}}}
-  Contingency: {{{contingency}}}
-  Environment: {{{environment}}}
-  Critical: {{{critical}}}
-  Monitored: {{{monitored}}}
-  IP Address: {{{ipAddress}}}
-  Support Group: {{{supportGroup}}}
-  Name Instance: {{{nameInstance}}}
-  BD Name: {{{bdName}}}
-  Name Server: {{{nameServer}}}
-  Is Clustered: {{{isClustered}}}
-  Class: {{{class}}}
-  Edition: {{{edition}}}
-  Engine: {{{engine}}}
-  License: {{{license}}}
+  Compañía: {{{company}}}
+  Ubicación: {{{location}}}
+  Estado Operativo: {{{operationalStatus}}}
+  Respaldada: {{{backedUp}}}
+  Contingencia: {{{contingency}}}
+  Entorno: {{{environment}}}
+  Crítica: {{{critical}}}
+  Monitoreada: {{{monitored}}}
+  Dirección IP: {{{ipAddress}}}
+  Grupo de Soporte: {{{supportGroup}}}
+  Nombre de Instancia: {{{nameInstance}}}
+  Nombre de BD: {{{bdName}}}
+  Nombre del Servidor: {{{nameServer}}}
+  Está en Clúster: {{{isClustered}}}
+  Clase: {{{class}}}
+  Edición: {{{edition}}}
+  Motor: {{{engine}}}
+  Licencia: {{{license}}}
 
-  Format your response as a JSON object conforming to the DatabaseRecommendationsOutputSchema. Only provide the JSON, nothing else.`, // Ensure valid JSON
+  Formatea tu respuesta como un objeto JSON que se ajuste al DatabaseRecommendationsOutputSchema. Solo proporciona el JSON, nada más.`,
 });
 
 const databaseRecommendationsFlow = ai.defineFlow(

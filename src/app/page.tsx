@@ -23,7 +23,7 @@ export default function Home() {
             className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
           >
             <DatabaseZap className="h-4 w-4 transition-all group-hover:scale-110" />
-            <span className="sr-only">SQL Insights</span>
+            <span className="sr-only">Perspectivas SQL</span>
           </Link>
           <TooltipProvider>
             <Tooltip>
@@ -33,10 +33,10 @@ export default function Home() {
                   className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-accent-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
                 >
                   <HomeIcon className="h-5 w-5" />
-                  <span className="sr-only">Dashboard</span>
+                  <span className="sr-only">Panel</span>
                 </Link>
               </TooltipTrigger>
-              <TooltipContent side="right">Dashboard</TooltipContent>
+              <TooltipContent side="right">Panel</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </nav>
@@ -49,17 +49,17 @@ export default function Home() {
                   className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
                 >
                   <Settings className="h-5 w-5" />
-                  <span className="sr-only">Settings</span>
+                  <span className="sr-only">Configuración</span>
                 </Link>
               </TooltipTrigger>
-              <TooltipContent side="right">Settings</TooltipContent>
+              <TooltipContent side="right">Configuración</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </nav>
       </aside>
       <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
         <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-          <h1 className="text-xl font-semibold">SQL Insights Dashboard</h1>
+          <h1 className="text-xl font-semibold">Panel de Perspectivas SQL</h1>
         </header>
         <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
           <DashboardClient />

@@ -19,9 +19,9 @@ export default function FileUploadDialog({ isOpen, onOpenChange }: FileUploadDia
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Import Database Inventory</DialogTitle>
+          <DialogTitle>Importar Inventario de Base de Datos</DialogTitle>
           <DialogDescription>
-            Upload a .csv or .xlsx file exported from MAP Toolkit.
+            Sube un archivo .csv o .xlsx exportado desde MAP Toolkit.
           </DialogDescription>
         </DialogHeader>
         <div className="mt-4 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10 dark:border-gray-100/25">
@@ -32,12 +32,12 @@ export default function FileUploadDialog({ isOpen, onOpenChange }: FileUploadDia
                 htmlFor="file-upload"
                 className="relative cursor-pointer rounded-md bg-white dark:bg-gray-900 font-semibold text-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 hover:text-primary/80"
               >
-                <span>Upload a file</span>
+                <span>Sube un archivo</span>
                 <input id="file-upload" name="file-upload" type="file" className="sr-only" />
               </label>
-              <p className="pl-1">or drag and drop</p>
+              <p className="pl-1">o arrastra y suelta</p>
             </div>
-            <p className="text-xs leading-5 text-gray-600 dark:text-gray-400">CSV, XLSX up to 10MB</p>
+            <p className="text-xs leading-5 text-gray-600 dark:text-gray-400">CSV, XLSX hasta 10MB</p>
           </div>
         </div>
       </DialogContent>
