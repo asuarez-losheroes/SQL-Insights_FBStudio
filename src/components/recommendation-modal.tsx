@@ -62,24 +62,24 @@ export default function RecommendationModal({
     setError(null);
     try {
       const input: DatabaseRecommendationsInput = {
-        company: database.Company,
-        location: database.Location,
-        operationalStatus: database['Operational Status'],
-        backedUp: database['Backed up'],
-        contingency: database.Contingency,
-        environment: database.Environment,
-        critical: database.Critical,
-        monitored: database.Monitored,
-        ipAddress: database['IP Address'],
-        supportGroup: database['Support Group'],
-        nameInstance: database['Name Instance'],
-        bdName: database['BD Name'],
-        nameServer: database['Name Server'],
-        isClustered: database['Is Clustered'],
-        class: database.Class,
-        edition: database.Edition,
-        engine: database.Engine,
-        license: database.License,
+        nombre_bd: database.nombre_bd,
+        instancia: database.instancia,
+        servidor: database.servidor,
+        ip: database.ip,
+        motor: database.motor,
+        version: database.version,
+        edicion: database.edicion,
+        licencia: database.licencia,
+        ambiente: database.ambiente,
+        critico: database.critico,
+        monitoreado: database.monitoreado,
+        respaldo: database.respaldo,
+        contingencia: database.contingencia,
+        ubicacion: database.ubicacion,
+        grupo_soporte: database.grupo_soporte,
+        cluster: database.cluster,
+        estado_operativo: database.estado_operativo,
+        compañia: database.compañia,
       };
 
       const result = await getDatabaseRecommendations(input);
@@ -115,7 +115,7 @@ export default function RecommendationModal({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Recomendaciones de IA para {database?.['BD Name']}</DialogTitle>
+          <DialogTitle>Recomendaciones de IA para {database?.nombre_bd}</DialogTitle>
           <DialogDescription>
             Sugerencias impulsadas por IA para mantenimiento y actualizaciones de la base de datos seleccionada.
           </DialogDescription>

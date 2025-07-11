@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 import {
-  File,
   ListFilter,
   MoreHorizontal,
   PlusCircle,
@@ -19,7 +18,6 @@ import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -72,19 +70,19 @@ export default function DashboardClient() {
     let result = databases;
     if (search) {
       result = result.filter(db => 
-        db['BD Name'].toLowerCase().includes(search.toLowerCase()) ||
-        db['Name Server'].toLowerCase().includes(search.toLowerCase()) ||
-        db['IP Address'].toLowerCase().includes(search.toLowerCase())
+        db.nombre_bd.toLowerCase().includes(search.toLowerCase()) ||
+        db.servidor.toLowerCase().includes(search.toLowerCase()) ||
+        db.ip.toLowerCase().includes(search.toLowerCase())
       );
     }
     if (environment !== 'all') {
-      result = result.filter(db => db.Environment === environment);
+      result = result.filter(db => db.ambiente === environment);
     }
     if (criticality !== 'all') {
-      result = result.filter(db => db.Critical === criticality);
+      result = result.filter(db => db.critico.toString() === criticality);
     }
     if (monitoring !== 'all') {
-      result = result.filter(db => db.Monitored === monitoring);
+      result = result.filter(db => db.monitoreado.toString() === monitoring);
     }
     setFilteredDatabases(result);
   }, [search, environment, criticality, monitoring, databases]);
@@ -117,9 +115,9 @@ export default function DashboardClient() {
   const summary = React.useMemo(() => {
     return {
       total: databases.length,
-      production: databases.filter(db => db.Environment === 'Production').length,
-      critical: databases.filter(db => db.Critical === 'Yes').length,
-      unmonitored: databases.filter(db => db.Monitored === 'No').length,
+      production: databases.filter(db => db.ambiente === 'Production').length,
+      critical: databases.filter(db => db.critico).length,
+      unmonitored: databases.filter(db => !db.monitoreado).length,
     }
   }, [databases]);
 
@@ -198,16 +196,16 @@ export default function DashboardClient() {
                                 <SelectTrigger><SelectValue placeholder="Criticidad" /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">Toda la Criticidad</SelectItem>
-                                    <SelectItem value="Yes">Crítico</SelectItem>
-                                    <SelectItem value="No">No Crítico</SelectItem>
+                                    <SelectItem value="true">Crítico</SelectItem>
+                                    <SelectItem value="false">No Crítico</SelectItem>
                                 </SelectContent>
                             </Select>
                              <Select value={monitoring} onValueChange={setMonitoring}>
                                 <SelectTrigger><SelectValue placeholder="Monitoreo" /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">Todo el Monitoreo</SelectItem>
-                                    <SelectItem value="Yes">Monitoreado</SelectItem>
-                                    <SelectItem value="No">No Monitoreado</SelectItem>
+                                    <SelectItem value="true">Monitoreado</SelectItem>
+                                    <SelectItem value="false">No Monitoreado</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -234,7 +232,7 @@ export default function DashboardClient() {
               <TableRow>
                 <TableHead>Nombre de BD</TableHead>
                 <TableHead>Servidor</TableHead>
-                <TableHead>Entorno</TableHead>
+                <TableHead>Ambiente</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead>Crítica</TableHead>
                 <TableHead>Monitoreada</TableHead>
@@ -246,18 +244,18 @@ export default function DashboardClient() {
             <TableBody>
               {filteredDatabases.map((db) => (
                 <TableRow key={db.id}>
-                  <TableCell className="font-medium">{db['BD Name']}</TableCell>
-                  <TableCell>{db['Name Server']}</TableCell>
+                  <TableCell className="font-medium">{db.nombre_bd}</TableCell>
+                  <TableCell>{db.servidor}</TableCell>
                   <TableCell>
-                    <Badge variant={db.Environment === 'Production' ? 'destructive' : 'secondary'}>{db.Environment}</Badge>
+                    <Badge variant={db.ambiente === 'Production' ? 'destructive' : 'secondary'}>{db.ambiente}</Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={db['Operational Status'] === 'Online' ? 'default' : 'outline' } className={db['Operational Status'] === 'Online' ? 'bg-green-500 text-white' : ''}>
-                      {db['Operational Status']}
+                    <Badge variant={db.estado_operativo === 'Operational' || db.estado_operativo === 'Online' ? 'default' : 'outline' } className={db.estado_operativo === 'Operational' || db.estado_operativo === 'Online' ? 'bg-green-500 text-white' : ''}>
+                      {db.estado_operativo}
                     </Badge>
                   </TableCell>
-                  <TableCell>{db.Critical}</TableCell>
-                  <TableCell>{db.Monitored}</TableCell>
+                  <TableCell>{db.critico ? 'Si' : 'No'}</TableCell>
+                  <TableCell>{db.monitoreado ? 'Si' : 'No'}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

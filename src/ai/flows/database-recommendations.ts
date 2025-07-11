@@ -12,25 +12,26 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const DatabaseRecommendationsInputSchema = z.object({
-  company: z.string().describe('El nombre de la empresa.'),
-  location: z.string().describe('La ubicación de la base de datos.'),
-  operationalStatus: z.string().describe('El estado operativo de la base de datos.'),
-  backedUp: z.string().describe('Si la base de datos está respaldada.'),
-  contingency: z.string().describe('El estado de contingencia de la base de datos.'),
-  environment: z.string().describe('El entorno de la base de datos (p. ej., Producción, Desarrollo).'),
-  critical: z.string().describe('Si la base de datos es crítica.'),
-  monitored: z.string().describe('Si la base de datos está monitoreada.'),
-  ipAddress: z.string().describe('La dirección IP del servidor de la base de datos.'),
-  supportGroup: z.string().describe('El grupo de soporte responsable de la base de datos.'),
-  nameInstance: z.string().describe('El nombre de la instancia de la base de datos.'),
-  bdName: z.string().describe('El nombre de la base de datos.'),
-  nameServer: z.string().describe('El nombre del servidor de la base de datos.'),
-  isClustered: z.string().describe('Si la base de datos está en clúster.'),
-  class: z.string().describe('La clase de la base de datos.'),
-  edition: z.string().describe('La edición de la base de datos.'),
-  engine: z.string().describe('El motor de la base de datos.'),
-  license: z.string().describe('La licencia de la base de datos.'),
+  nombre_bd: z.string().describe('El nombre de la base de datos.'),
+  instancia: z.string().describe('El nombre de la instancia de la base de datos.'),
+  servidor: z.string().describe('El nombre del servidor de la base de datos.'),
+  ip: z.string().describe('La dirección IP del servidor de la base de datos.'),
+  motor: z.string().describe('El motor de la base de datos.'),
+  version: z.string().describe('La versión de la base de datos.'),
+  edicion: z.string().describe('La edición de la base de datos.'),
+  licencia: z.string().describe('La licencia de la base de datos.'),
+  ambiente: z.string().describe('El entorno de la base de datos (p. ej., Producción, Desarrollo).'),
+  critico: z.boolean().describe('Si la base de datos es crítica.'),
+  monitoreado: z.boolean().describe('Si la base de datos está monitoreada.'),
+  respaldo: z.boolean().describe('Si la base de datos está respaldada.'),
+  contingencia: z.boolean().describe('El estado de contingencia de la base de datos.'),
+  ubicacion: z.string().describe('La ubicación de la base de datos.'),
+  grupo_soporte: z.string().describe('El grupo de soporte responsable de la base de datos.'),
+  cluster: z.boolean().describe('Si la base de datos está en clúster.'),
+  estado_operativo: z.string().describe('El estado operativo de la base de datos.'),
+  compañia: z.string().describe('El nombre de la empresa.'),
 });
+
 export type DatabaseRecommendationsInput = z.infer<typeof DatabaseRecommendationsInputSchema>;
 
 const MaintenanceTaskSchema = z.object({
@@ -69,24 +70,24 @@ const databaseRecommendationsPrompt = ai.definePrompt({
 
   Considera factores como el entorno, la criticidad, el estado de las copias de seguridad y el monitoreo.
 
-  Compañía: {{{company}}}
-  Ubicación: {{{location}}}
-  Estado Operativo: {{{operationalStatus}}}
-  Respaldada: {{{backedUp}}}
-  Contingencia: {{{contingency}}}
-  Entorno: {{{environment}}}
-  Crítica: {{{critical}}}
-  Monitoreada: {{{monitored}}}
-  Dirección IP: {{{ipAddress}}}
-  Grupo de Soporte: {{{supportGroup}}}
-  Nombre de Instancia: {{{nameInstance}}}
-  Nombre de BD: {{{bdName}}}
-  Nombre del Servidor: {{{nameServer}}}
-  Está en Clúster: {{{isClustered}}}
-  Clase: {{{class}}}
-  Edición: {{{edition}}}
-  Motor: {{{engine}}}
-  Licencia: {{{license}}}
+  Compañía: {{{compañia}}}
+  Ubicación: {{{ubicacion}}}
+  Estado Operativo: {{{estado_operativo}}}
+  Respaldada: {{{respaldo}}}
+  Contingencia: {{{contingencia}}}
+  Entorno: {{{ambiente}}}
+  Crítica: {{{critico}}}
+  Monitoreada: {{{monitoreado}}}
+  Dirección IP: {{{ip}}}
+  Grupo de Soporte: {{{grupo_soporte}}}
+  Nombre de Instancia: {{{instancia}}}
+  Nombre de BD: {{{nombre_bd}}}
+  Nombre del Servidor: {{{servidor}}}
+  Está en Clúster: {{{cluster}}}
+  Edición: {{{edicion}}}
+  Motor: {{{motor}}}
+  Licencia: {{{licencia}}}
+  Versión: {{{version}}}
 
   Formatea tu respuesta como un objeto JSON que se ajuste al DatabaseRecommendationsOutputSchema. Solo proporciona el JSON, nada más.`,
 });
