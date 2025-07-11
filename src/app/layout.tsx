@@ -1,5 +1,6 @@
 import type {Metadata} from 'next';
 import './globals.css';
+import { DataProvider } from '@/context/data-context';
 
 export const metadata: Metadata = {
   title: 'App de Firebase Studio',
@@ -18,7 +19,9 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-body antialiased">{children}</body>
+      <body className="font-body antialiased">
+        <DataProvider>{children}</DataProvider>
+      </body>
     </html>
   );
 }

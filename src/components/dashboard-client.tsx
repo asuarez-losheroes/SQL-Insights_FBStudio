@@ -47,14 +47,24 @@ import {
 import { Input } from '@/components/ui/input';
 
 import { mockDatabases } from '@/lib/mock-data';
-import type { Database } from '@/lib/types';
 import RecommendationModal from './recommendation-modal';
 import FileUploadDialog from './file-upload-dialog';
 import DatabaseFormDialog from './database-form-dialog';
+import { useData } from '@/context/data-context';
+import { DatabaseFormValues } from '@/lib/schema';
+
+// Helper function to find relation name
+const getRelationName = (id: string, collection: {id: string, nombre: string}[]) => {
+  return collection.find(item => item.id === id)?.nombre || 'Desconocido';
+};
 
 export default function DashboardClient() {
-  const [databases, setDatabases] = React.useState<Database[]>(mockDatabases);
-  const [filteredDatabases, setFilteredDatabases] = React.useState<Database[]>(mockDatabases);
+  const { 
+    servidores, ambientes, estadosOperativos, motores, ediciones, licencias, ubicaciones, gruposSoporte, companias 
+  } = useData();
+  
+  const [databases, setDatabases] = React.useState<DatabaseFormValues[]>(mockDatabases);
+  const [filteredDatabases, setFilteredDatabases] = React.useState<DatabaseFormValues[]>(mockDatabases);
 
   // Filter states
   const [search, setSearch] = React.useState('');
@@ -63,8 +73,8 @@ export default function DashboardClient() {
   const [monitoring, setMonitoring] = React.useState('all');
   
   // Modal states
-  const [selectedDb, setSelectedDb] = React.useState<Database | null>(null);
-  const [editingDb, setEditingDb] = React.useState<Database | null>(null);
+  const [selectedDb, setSelectedDb] = React.useState<DatabaseFormValues | null>(null);
+  const [editingDb, setEditingDb] = React.useState<DatabaseFormValues | null>(null);
   const [isRecommendationModalOpen, setRecommendationModalOpen] = React.useState(false);
   const [isFileUploadDialogOpen, setFileUploadDialogOpen] = React.useState(false);
   const [isFormDialogOpen, setFormDialogOpen] = React.useState(false);
@@ -72,14 +82,16 @@ export default function DashboardClient() {
   React.useEffect(() => {
     let result = databases;
     if (search) {
-      result = result.filter(db => 
-        db.nombre_bd.toLowerCase().includes(search.toLowerCase()) ||
-        db.servidor.toLowerCase().includes(search.toLowerCase()) ||
-        db.ip.toLowerCase().includes(search.toLowerCase())
-      );
+      const lowercasedSearch = search.toLowerCase();
+      result = result.filter(db => {
+        const servidorName = getRelationName(db.servidorId, servidores).toLowerCase();
+        return db.nombre_bd.toLowerCase().includes(lowercasedSearch) ||
+               servidorName.includes(lowercasedSearch) ||
+               db.ip.toLowerCase().includes(lowercasedSearch)
+      });
     }
     if (environment !== 'all') {
-      result = result.filter(db => db.ambiente === environment);
+      result = result.filter(db => db.ambienteId === environment);
     }
     if (criticality !== 'all') {
       result = result.filter(db => db.critico.toString() === criticality);
@@ -88,9 +100,9 @@ export default function DashboardClient() {
       result = result.filter(db => db.monitoreado.toString() === monitoring);
     }
     setFilteredDatabases(result);
-  }, [search, environment, criticality, monitoring, databases]);
+  }, [search, environment, criticality, monitoring, databases, servidores]);
 
-  const handleGetRecommendations = (db: Database) => {
+  const handleGetRecommendations = (db: DatabaseFormValues) => {
     setSelectedDb(db);
     setRecommendationModalOpen(true);
   };
@@ -100,33 +112,52 @@ export default function DashboardClient() {
     setFormDialogOpen(true);
   };
 
-  const handleEdit = (db: Database) => {
+  const handleEdit = (db: DatabaseFormValues) => {
     setEditingDb(db);
     setFormDialogOpen(true);
   };
 
-  const handleSave = (values: Database) => {
+  const handleSave = (values: DatabaseFormValues) => {
     if (editingDb) {
-      // Update existing
       setDatabases(databases.map(db => db.id === values.id ? values : db));
     } else {
-      // Create new
       const newDb = { ...values, id: `db-${Date.now()}` };
       setDatabases([...databases, newDb]);
     }
   };
 
-
   const exportToCsv = () => {
-    const headers = Object.keys(filteredDatabases[0]);
+    const dataToExport = filteredDatabases.map(db => ({
+        "Nombre BD": db.nombre_bd,
+        "Servidor": getRelationName(db.servidorId, servidores),
+        "Motor": getRelationName(db.motorId, motores),
+        "Edición": getRelationName(db.edicionId, ediciones),
+        "Licencia": getRelationName(db.licenciaId, licencias),
+        "Ambiente": getRelationName(db.ambienteId, ambientes),
+        "Ubicación": getRelationName(db.ubicacionId, ubicaciones),
+        "Grupo Soporte": getRelationName(db.grupoSoporteId, gruposSoporte),
+        "Estado": getRelationName(db.estadoOperativoId, estadosOperativos),
+        "Compañía": getRelationName(db.companiaId, companias),
+        "IP": db.ip,
+        "Versión": db.version,
+        "Crítico": db.critico ? 'Si' : 'No',
+        "Monitoreado": db.monitoreado ? 'Si' : 'No',
+        "Respaldo": db.respaldo ? 'Si' : 'No',
+        "Contingencia": db.contingencia ? 'Si' : 'No',
+        "Clúster": db.cluster ? 'Si' : 'No',
+    }));
+
+    if (dataToExport.length === 0) return;
+
+    const headers = Object.keys(dataToExport[0]);
     const csvRows = [
       headers.join(','),
-      ...filteredDatabases.map(row =>
+      ...dataToExport.map(row =>
         headers.map(fieldName => JSON.stringify((row as any)[fieldName])).join(',')
       ),
     ];
   
-    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.setAttribute('hidden', '');
@@ -138,13 +169,14 @@ export default function DashboardClient() {
   };
   
   const summary = React.useMemo(() => {
+    const produccionAmbiente = ambientes.find(a => a.nombre.toLowerCase() === 'producción');
     return {
       total: databases.length,
-      production: databases.filter(db => db.ambiente === 'Production').length,
+      production: databases.filter(db => db.ambienteId === produccionAmbiente?.id).length,
       critical: databases.filter(db => db.critico).length,
       unmonitored: databases.filter(db => !db.monitoreado).length,
     }
-  }, [databases]);
+  }, [databases, ambientes]);
 
   return (
     <>
@@ -211,10 +243,7 @@ export default function DashboardClient() {
                                 <SelectTrigger><SelectValue placeholder="Entorno" /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">Todos los Entornos</SelectItem>
-                                    <SelectItem value="Production">Producción</SelectItem>
-                                    <SelectItem value="Development">Desarrollo</SelectItem>
-                                    <SelectItem value="Staging">Pruebas</SelectItem>
-                                    <SelectItem value="Contingency">Contingencia</SelectItem>
+                                    {ambientes.map(a => <SelectItem key={a.id} value={a.id}>{a.nombre}</SelectItem>)}
                                 </SelectContent>
                             </Select>
                             <Select value={criticality} onValueChange={setCriticality}>
@@ -273,40 +302,44 @@ export default function DashboardClient() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredDatabases.map((db) => (
-                <TableRow key={db.id}>
-                  <TableCell className="font-medium">{db.nombre_bd}</TableCell>
-                  <TableCell>{db.servidor}</TableCell>
-                  <TableCell>
-                    <Badge variant={db.ambiente === 'Production' ? 'destructive' : 'secondary'}>{db.ambiente}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={db.estado_operativo === 'Operational' || db.estado_operativo === 'Online' ? 'default' : 'outline' } className={db.estado_operativo === 'Operational' || db.estado_operativo === 'Online' ? 'bg-green-500 text-white' : ''}>
-                      {db.estado_operativo}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{db.critico ? 'Si' : 'No'}</TableCell>
-                  <TableCell>{db.monitoreado ? 'Si' : 'No'}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Alternar menú</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                        <DropdownMenuItem onSelect={() => handleGetRecommendations(db)}>
-                          <Sparkles className="mr-2 h-4 w-4" /> Obtener Recomendaciones de IA
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => handleEdit(db)}>Editar</DropdownMenuItem>
-                        <DropdownMenuItem>Eliminar</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {filteredDatabases.map((db) => {
+                const ambienteName = getRelationName(db.ambienteId, ambientes);
+                const estadoName = getRelationName(db.estadoOperativoId, estadosOperativos);
+                return (
+                  <TableRow key={db.id}>
+                    <TableCell className="font-medium">{db.nombre_bd}</TableCell>
+                    <TableCell>{getRelationName(db.servidorId, servidores)}</TableCell>
+                    <TableCell>
+                      <Badge variant={ambienteName === 'Producción' ? 'destructive' : 'secondary'}>{ambienteName}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={estadoName === 'Operacional' || estadoName === 'En Línea' ? 'default' : 'outline' } className={estadoName === 'Operacional' || estadoName === 'En Línea' ? 'bg-green-500 text-white' : ''}>
+                        {estadoName}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{db.critico ? 'Si' : 'No'}</TableCell>
+                    <TableCell>{db.monitoreado ? 'Si' : 'No'}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button aria-haspopup="true" size="icon" variant="ghost">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Alternar menú</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                          <DropdownMenuItem onSelect={() => handleGetRecommendations(db)}>
+                            <Sparkles className="mr-2 h-4 w-4" /> Obtener Recomendaciones de IA
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => handleEdit(db)}>Editar</DropdownMenuItem>
+                          <DropdownMenuItem>Eliminar</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
             </TableBody>
           </Table>
         </CardContent>
@@ -316,7 +349,18 @@ export default function DashboardClient() {
         <RecommendationModal
           isOpen={isRecommendationModalOpen}
           onOpenChange={setRecommendationModalOpen}
-          database={selectedDb}
+          database={{
+            ...selectedDb,
+            servidor: getRelationName(selectedDb.servidorId, servidores),
+            motor: getRelationName(selectedDb.motorId, motores),
+            edicion: getRelationName(selectedDb.edicionId, ediciones),
+            licencia: getRelationName(selectedDb.licenciaId, licencias),
+            ambiente: getRelationName(selectedDb.ambienteId, ambientes),
+            ubicacion: getRelationName(selectedDb.ubicacionId, ubicaciones),
+            grupo_soporte: getRelationName(selectedDb.grupoSoporteId, gruposSoporte),
+            estado_operativo: getRelationName(selectedDb.estadoOperativoId, estadosOperativos),
+            compañia: getRelationName(selectedDb.companiaId, companias),
+          }}
         />
       )}
 
