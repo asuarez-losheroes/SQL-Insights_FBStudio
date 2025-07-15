@@ -59,6 +59,7 @@ export default function ServidoresPage() {
 
   const form = useForm<FormData>({
     resolver: zodResolver(servidorSchema.omit({ id: true })),
+    mode: 'onChange',
     defaultValues: {
       nombre: "",
       ip: "",
@@ -88,7 +89,7 @@ export default function ServidoresPage() {
           sistemaOperativoId: "",
           cpu: 1,
           ramGB: 2,
-          discos: [{ id: `new-disk-${Date.now()}`, nombre: 'C:', totalGB: 100, usadoGB: 50 }],
+          discos: [],
         });
       }
       setTimeout(() => {
@@ -250,7 +251,7 @@ export default function ServidoresPage() {
                         <Input placeholder="Ej: 192.168.1.1" {...field} />
                       </FormControl>
                       <FormDescriptionComponent>
-                        El formato debe ser 255.255.255.255
+                        Ej: 192.168.1.1
                       </FormDescriptionComponent>
                       <FormMessage />
                     </FormItem>
