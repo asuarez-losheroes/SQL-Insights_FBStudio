@@ -4,6 +4,7 @@ export const mockServidores: Servidor[] = [
   { 
     id: "srv-001", 
     nombre: "PROD-SQL-01",
+    sistemaOperativo: "Windows Server 2019",
     cpu: 8,
     ramGB: 64,
     discos: [
@@ -14,6 +15,7 @@ export const mockServidores: Servidor[] = [
   { 
     id: "srv-002", 
     nombre: "DEV-SQL-01",
+    sistemaOperativo: "Windows Server 2022",
     cpu: 4,
     ramGB: 32,
     discos: [
@@ -23,6 +25,7 @@ export const mockServidores: Servidor[] = [
   { 
     id: "srv-003", 
     nombre: "QA-SQL-01",
+    sistemaOperativo: "Linux",
     cpu: 4,
     ramGB: 32,
     discos: [
