@@ -92,7 +92,6 @@ export default function ServidoresPage() {
           discos: [{ id: `new-disk-${Date.now()}`, nombre: 'C:', totalGB: 100, usadoGB: 50 }],
         });
       }
-      // Set focus on the first input when the dialog opens
       setTimeout(() => {
         form.setFocus("nombre");
       }, 100);
@@ -371,7 +370,7 @@ export default function ServidoresPage() {
                       Añadir Disco
                     </Button>
                     {form.formState.errors.discos && typeof form.formState.errors.discos === 'object' && 'message' in form.formState.errors.discos && (
-                      <p className="text-red-500 text-xs mt-1">{form.formState.errors.discos.message}</p>
+                      <p className="text-red-500 text-xs mt-1">{form.formState.errors.discos.message as string}</p>
                     )}
                 </div>
 
