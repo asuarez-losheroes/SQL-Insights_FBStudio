@@ -2,7 +2,11 @@
 
 import * as React from "react";
 import Link from 'next/link';
-import { PlusCircle, MoreHorizontal, Home } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Home, Trash2 } from "lucide-react";
+import { useFieldArray, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
 import {
   Table,
   TableBody,
@@ -32,73 +36,81 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import { servidorSchema, Servidor } from "@/lib/relational-schema";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-
-// Mock data inicial
-const mockServidores: Servidor[] = [
-  { id: "srv-001", nombre: "PROD-SQL-01" },
-  { id: "srv-002", nombre: "DEV-SQL-01" },
-  { id: "srv-003", nombre: "QA-SQL-01" },
-];
+import { useData } from "@/context/data-context";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type FormData = z.infer<typeof servidorSchema>;
 
 export default function ServidoresPage() {
-  const [servidores, setServidores] = React.useState<Servidor[]>(mockServidores);
+  const { servidores, addRelationalData, updateRelationalData, deleteRelationalData } = useData();
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingServidor, setEditingServidor] = React.useState<Servidor | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<FormData>({
+  const form = useForm<FormData>({
     resolver: zodResolver(servidorSchema.omit({ id: true })),
+    defaultValues: {
+      nombre: "",
+      cpu: 1,
+      ramGB: 2,
+      discos: [{ nombre: 'C:', totalGB: 100, usadoGB: 50 }],
+    }
   });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "discos",
+  });
+
+  React.useEffect(() => {
+    if (editingServidor) {
+      form.reset({
+        ...editingServidor,
+        discos: editingServidor.discos.map(d => ({...d, id: undefined})) // remove id for validation
+      });
+    } else {
+      form.reset({
+        nombre: "",
+        cpu: 1,
+        ramGB: 2,
+        discos: [{ nombre: 'C:', totalGB: 100, usadoGB: 50, id: `disk-${Date.now()}` }],
+      });
+    }
+  }, [editingServidor, isDialogOpen, form]);
+
 
   const handleCreate = () => {
     setEditingServidor(null);
-    reset({ nombre: "" });
     setIsDialogOpen(true);
   };
 
   const handleEdit = (servidor: Servidor) => {
     setEditingServidor(servidor);
-    reset(servidor);
     setIsDialogOpen(true);
   };
   
   const handleDelete = (id: string) => {
-    setServidores(servidores.filter(s => s.id !== id));
+    deleteRelationalData('servidores', id);
   };
 
-  const onSubmit = (data: FormData) => {
+  const onSubmit = (data: Omit<FormData, 'id'>) => {
+    const finalData = {
+      ...data,
+      discos: data.discos.map((d, i) => ({ ...d, id: editingServidor?.discos[i]?.id || `disk-${Date.now()}-${i}` }))
+    };
+
     if (editingServidor) {
-      // Actualizar
-      setServidores(
-        servidores.map((s) =>
-          s.id === editingServidor.id ? { ...s, ...data } : s
-        )
-      );
+      updateRelationalData('servidores', { ...editingServidor, ...finalData });
     } else {
-      // Crear
-      const newServidor: Servidor = {
-        id: `srv-${Date.now()}`,
-        ...data,
-      };
-      setServidores([...servidores, newServidor]);
+      addRelationalData('servidores', finalData);
     }
     setIsDialogOpen(false);
   };
-
 
   return (
     <Card>
@@ -119,9 +131,7 @@ export default function ServidoresPage() {
             </Link>
             <Button size="sm" className="h-8 gap-1" onClick={handleCreate}>
               <PlusCircle className="h-3.5 w-3.5" />
-              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                Añadir Servidor
-              </span>
+              <span>Añadir Servidor</span>
             </Button>
           </div>
         </div>
@@ -131,6 +141,9 @@ export default function ServidoresPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Nombre</TableHead>
+              <TableHead className="text-center">CPU</TableHead>
+              <TableHead className="text-center">RAM (GB)</TableHead>
+              <TableHead>Almacenamiento</TableHead>
               <TableHead>
                 <span className="sr-only">Acciones</span>
               </TableHead>
@@ -140,6 +153,21 @@ export default function ServidoresPage() {
             {servidores.map((servidor) => (
               <TableRow key={servidor.id}>
                 <TableCell className="font-medium">{servidor.nombre}</TableCell>
+                <TableCell className="text-center">{servidor.cpu}</TableCell>
+                <TableCell className="text-center">{servidor.ramGB}</TableCell>
+                <TableCell>
+                  <div className="flex flex-col gap-2">
+                    {servidor.discos.map(disco => (
+                       <div key={disco.id}>
+                        <div className="flex justify-between text-xs">
+                           <span>{disco.nombre}</span>
+                           <span>{disco.usadoGB} GB / {disco.totalGB} GB</span>
+                        </div>
+                         <Progress value={(disco.usadoGB / disco.totalGB) * 100} className="h-2" />
+                       </div>
+                    ))}
+                  </div>
+                </TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -162,28 +190,71 @@ export default function ServidoresPage() {
       </CardContent>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <DialogHeader>
-              <DialogTitle>{editingServidor ? "Editar Servidor" : "Añadir Servidor"}</DialogTitle>
-            </DialogHeader>
+        <DialogContent className="sm:max-w-2xl">
+           <DialogHeader>
+            <DialogTitle>{editingServidor ? "Editar Servidor" : "Añadir Servidor"}</DialogTitle>
+            <DialogDescription>
+              {editingServidor ? "Edita la información del servidor." : "Añade un nuevo servidor al inventario."}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+          <ScrollArea className="h-[60vh] p-4">
             <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="nombre" className="text-right">
-                  Nombre
-                </Label>
-                <div className="col-span-3">
-                  <Input
-                    id="nombre"
-                    {...register("nombre")}
-                    className={errors.nombre ? "border-red-500" : ""}
-                  />
-                  {errors.nombre && (
-                    <p className="text-red-500 text-xs mt-1">{errors.nombre.message}</p>
-                  )}
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="nombre" className="text-right">Nombre</Label>
+                  <div className="col-span-3">
+                    <Input id="nombre" {...form.register("nombre")} />
+                    {form.formState.errors.nombre && <p className="text-red-500 text-xs mt-1">{form.formState.errors.nombre.message}</p>}
+                  </div>
                 </div>
-              </div>
+                 <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="cpu" className="text-right">CPU (Cores)</Label>
+                  <div className="col-span-3">
+                    <Input id="cpu" type="number" {...form.register("cpu", { valueAsNumber: true })} />
+                    {form.formState.errors.cpu && <p className="text-red-500 text-xs mt-1">{form.formState.errors.cpu.message}</p>}
+                  </div>
+                </div>
+                 <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="ramGB" className="text-right">RAM (GB)</Label>
+                  <div className="col-span-3">
+                    <Input id="ramGB" type="number" {...form.register("ramGB", { valueAsNumber: true })} />
+                    {form.formState.errors.ramGB && <p className="text-red-500 text-xs mt-1">{form.formState.errors.ramGB.message}</p>}
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Discos</Label>
+                   {fields.map((field, index) => (
+                    <div key={field.id} className="grid grid-cols-12 gap-2 items-center mt-2 p-2 border rounded-md">
+                      <div className="col-span-3">
+                        <Label htmlFor={`discos.${index}.nombre`} className="text-xs">Nombre</Label>
+                        <Input id={`discos.${index}.nombre`} {...form.register(`discos.${index}.nombre`)} placeholder="Ej: C:" />
+                      </div>
+                      <div className="col-span-4">
+                        <Label htmlFor={`discos.${index}.totalGB`} className="text-xs">Total (GB)</Label>
+                        <Input id={`discos.${index}.totalGB`} type="number" {...form.register(`discos.${index}.totalGB`, { valueAsNumber: true })} />
+                      </div>
+                      <div className="col-span-4">
+                        <Label htmlFor={`discos.${index}.usadoGB`} className="text-xs">Usado (GB)</Label>
+                        <Input id={`discos.${index}.usadoGB`} type="number" {...form.register(`discos.${index}.usadoGB`, { valueAsNumber: true })} />
+                      </div>
+                      <div className="col-span-1 self-end">
+                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      {form.formState.errors.discos?.[index]?.nombre && <p className="text-red-500 text-xs mt-1 col-span-12">{form.formState.errors.discos[index].nombre.message}</p>}
+                      {form.formState.errors.discos?.[index]?.totalGB && <p className="text-red-500 text-xs mt-1 col-span-12">{form.formState.errors.discos[index].totalGB.message}</p>}
+                      {form.formState.errors.discos?.[index]?.usadoGB && <p className="text-red-500 text-xs mt-1 col-span-12">{form.formState.errors.discos[index].usadoGB.message}</p>}
+                    </div>
+                  ))}
+                  <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => append({ id: `new-${Date.now()}`, nombre: '', totalGB: 0, usadoGB: 0 })}>
+                    Añadir Disco
+                  </Button>
+                  {form.formState.errors.discos && <p className="text-red-500 text-xs mt-1">{form.formState.errors.discos.message}</p>}
+                </div>
             </div>
+            </ScrollArea>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
               <Button type="submit">Guardar</Button>

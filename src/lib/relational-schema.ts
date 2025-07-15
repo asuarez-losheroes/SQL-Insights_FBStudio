@@ -6,8 +6,22 @@ export const relationalSchema = z.object({
   nombre: z.string().min(1, "El nombre es requerido."),
 });
 
+// Esquema para los discos de un servidor
+export const discoSchema = z.object({
+  id: z.string(),
+  nombre: z.string().min(1, "El nombre del disco es requerido."),
+  totalGB: z.number().positive("El tamaño total debe ser positivo."),
+  usadoGB: z.number().min(0, "El espacio usado no puede ser negativo."),
+});
+
+// Esquema extendido para Servidor
+export const servidorSchema = relationalSchema.extend({
+  cpu: z.number().int().positive("La cantidad de CPU es requerida."),
+  ramGB: z.number().int().positive("La cantidad de RAM es requerida."),
+  discos: z.array(discoSchema).min(1, "Debe haber al menos un disco."),
+});
+
 // Exportamos tipos específicos para mayor claridad en el código.
-export const servidorSchema = relationalSchema;
 export const motorSchema = relationalSchema;
 export const edicionSchema = relationalSchema;
 export const licenciaSchema = relationalSchema;
@@ -18,6 +32,7 @@ export const estadoOperativoSchema = relationalSchema;
 export const companiaSchema = relationalSchema;
 
 // Tipos inferidos de Zod para usarlos en el frontend.
+export type Disco = z.infer<typeof discoSchema>;
 export type Servidor = z.infer<typeof servidorSchema>;
 export type Motor = z.infer<typeof motorSchema>;
 export type Edicion = z.infer<typeof edicionSchema>;

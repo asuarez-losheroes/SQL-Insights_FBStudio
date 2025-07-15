@@ -1,9 +1,35 @@
 import { Servidor, Motor, Edicion, Licencia, Ambiente, Ubicacion, GrupoSoporte, EstadoOperativo, Compania } from "@/lib/relational-schema";
 
 export const mockServidores: Servidor[] = [
-  { id: "srv-001", nombre: "PROD-SQL-01" },
-  { id: "srv-002", nombre: "DEV-SQL-01" },
-  { id: "srv-003", nombre: "QA-SQL-01" },
+  { 
+    id: "srv-001", 
+    nombre: "PROD-SQL-01",
+    cpu: 8,
+    ramGB: 64,
+    discos: [
+      { id: "disk-001", nombre: "C:", totalGB: 200, usadoGB: 150 },
+      { id: "disk-002", nombre: "D:", totalGB: 1024, usadoGB: 800 },
+    ]
+  },
+  { 
+    id: "srv-002", 
+    nombre: "DEV-SQL-01",
+    cpu: 4,
+    ramGB: 32,
+    discos: [
+      { id: "disk-003", nombre: "C:", totalGB: 100, usadoGB: 50 },
+    ]
+  },
+  { 
+    id: "srv-003", 
+    nombre: "QA-SQL-01",
+    cpu: 4,
+    ramGB: 32,
+    discos: [
+      { id: "disk-004", nombre: "C:", totalGB: 150, usadoGB: 75 },
+      { id: "disk-005", nombre: "E:", totalGB: 500, usadoGB: 250 },
+    ]
+  },
 ];
 
 export const mockMotores: Motor[] = [
