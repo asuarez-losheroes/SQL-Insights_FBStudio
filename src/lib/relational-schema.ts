@@ -16,7 +16,7 @@ export const discoSchema = z.object({
 
 // Esquema extendido para Servidor
 export const servidorSchema = relationalSchema.extend({
-  sistemaOperativo: z.string().min(1, "El sistema operativo es requerido."),
+  sistemaOperativoId: z.string().min(1, "El sistema operativo es requerido."),
   cpu: z.number().int().positive("La cantidad de CPU es requerida."),
   ramGB: z.number().int().positive("La cantidad de RAM es requerida."),
   discos: z.array(discoSchema).min(1, "Debe haber al menos un disco."),
@@ -31,6 +31,7 @@ export const ubicacionSchema = relationalSchema;
 export const grupoSoporteSchema = relationalSchema;
 export const estadoOperativoSchema = relationalSchema;
 export const companiaSchema = relationalSchema;
+export const sistemaOperativoSchema = relationalSchema;
 
 // Tipos inferidos de Zod para usarlos en el frontend.
 export type Disco = z.infer<typeof discoSchema>;
@@ -43,3 +44,4 @@ export type Ubicacion = z.infer<typeof ubicacionSchema>;
 export type GrupoSoporte = z.infer<typeof grupoSoporteSchema>;
 export type EstadoOperativo = z.infer<typeof estadoOperativoSchema>;
 export type Compania = z.infer<typeof companiaSchema>;
+export type SistemaOperativo = z.infer<typeof sistemaOperativoSchema>;

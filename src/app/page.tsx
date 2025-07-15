@@ -10,7 +10,8 @@ import {
   MapPin,
   Users,
   Activity,
-  Building
+  Building,
+  Monitor,
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -68,6 +69,7 @@ export default function Home() {
                 </Tooltip>
                 <CollapsibleContent className='flex flex-col items-center gap-4 py-2'>
                     <Tooltip><TooltipTrigger asChild><Link href="/admin/servidores" className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"><Server className="h-5 w-5" /><span className="sr-only">Servidores</span></Link></TooltipTrigger><TooltipContent side="right">Servidores</TooltipContent></Tooltip>
+                    <Tooltip><TooltipTrigger asChild><Link href="/admin/sistemas-operativos" className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"><Monitor className="h-5 w-5" /><span className="sr-only">Sistemas Operativos</span></Link></TooltipTrigger><TooltipContent side="right">Sistemas Operativos</TooltipContent></Tooltip>
                     <Tooltip><TooltipTrigger asChild><Link href="/admin/motores" className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"><Database className="h-5 w-5" /><span className="sr-only">Motores</span></Link></TooltipTrigger><TooltipContent side="right">Motores</TooltipContent></Tooltip>
                     <Tooltip><TooltipTrigger asChild><Link href="/admin/ediciones" className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"><BookCopy className="h-5 w-5" /><span className="sr-only">Ediciones</span></Link></TooltipTrigger><TooltipContent side="right">Ediciones</TooltipContent></Tooltip>
                     <Tooltip><TooltipTrigger asChild><Link href="/admin/licencias" className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"><KeyRound className="h-5 w-5" /><span className="sr-only">Licencias</span></Link></TooltipTrigger><TooltipContent side="right">Licencias</TooltipContent></Tooltip>

@@ -11,6 +11,7 @@ import {
   GrupoSoporte,
   EstadoOperativo,
   Compania,
+  SistemaOperativo,
 } from "@/lib/relational-schema";
 import {
   mockServidores,
@@ -22,9 +23,10 @@ import {
   mockGruposSoporte,
   mockEstadosOperativos,
   mockCompanias,
+  mockSistemasOperativos,
 } from "@/lib/mock-relational-data";
 
-type RelationalData = Servidor | Motor | Edicion | Licencia | Ambiente | Ubicacion | GrupoSoporte | EstadoOperativo | Compania;
+type RelationalData = Servidor | Motor | Edicion | Licencia | Ambiente | Ubicacion | GrupoSoporte | EstadoOperativo | Compania | SistemaOperativo;
 
 type DataContextType = {
   servidores: Servidor[];
@@ -36,6 +38,7 @@ type DataContextType = {
   gruposSoporte: GrupoSoporte[];
   estadosOperativos: EstadoOperativo[];
   companias: Compania[];
+  sistemasOperativos: SistemaOperativo[];
   
   addRelationalData: (type: string, data: Omit<RelationalData, 'id'>) => void;
   updateRelationalData: (type: string, data: RelationalData) => void;
@@ -81,6 +84,7 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
   const [gruposSoporte, setGruposSoporte] = React.useState(mockGruposSoporte);
   const [estadosOperativos, setEstadosOperativos] = React.useState(mockEstadosOperativos);
   const [companias, setCompanias] = React.useState(mockCompanias);
+  const [sistemasOperativos, setSistemasOperativos] = React.useState(mockSistemasOperativos);
   
   const setters: Record<string, React.Dispatch<React.SetStateAction<any[]>>> = {
     servidores: setServidores,
@@ -92,6 +96,7 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     gruposSoporte: setGruposSoporte,
     estadosOperativos: setEstadosOperativos,
     companias: setCompanias,
+    sistemasOperativos: setSistemasOperativos,
   };
 
   const prefixes: Record<string, string> = {
@@ -104,6 +109,7 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     gruposSoporte: 'grp',
     estadosOperativos: 'est',
     companias: 'com',
+    sistemasOperativos: 'so',
   }
 
   const addRelationalData = (type: string, data: Omit<RelationalData, 'id'>) => {
@@ -138,6 +144,7 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     gruposSoporte,
     estadosOperativos,
     companias,
+    sistemasOperativos,
     addRelationalData,
     updateRelationalData,
     deleteRelationalData,

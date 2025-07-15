@@ -50,16 +50,8 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from "@/component
 
 type FormData = z.infer<typeof servidorSchema>;
 
-const sistemasOperativos = [
-  "Windows Server 2016",
-  "Windows Server 2019",
-  "Windows Server 2022",
-  "Linux",
-  "Otro",
-];
-
 export default function ServidoresPage() {
-  const { servidores, addRelationalData, updateRelationalData, deleteRelationalData } = useData();
+  const { servidores, sistemasOperativos, addRelationalData, updateRelationalData, deleteRelationalData } = useData();
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingServidor, setEditingServidor] = React.useState<Servidor | null>(null);
 
@@ -67,7 +59,7 @@ export default function ServidoresPage() {
     resolver: zodResolver(servidorSchema.omit({ id: true })),
     defaultValues: {
       nombre: "",
-      sistemaOperativo: "",
+      sistemaOperativoId: "",
       cpu: 1,
       ramGB: 2,
       discos: [{ nombre: 'C:', totalGB: 100, usadoGB: 50 }],
@@ -89,7 +81,7 @@ export default function ServidoresPage() {
       } else {
         form.reset({
           nombre: "",
-          sistemaOperativo: "",
+          sistemaOperativoId: "",
           cpu: 1,
           ramGB: 2,
           discos: [{ id: `new-disk-${Date.now()}`, nombre: 'C:', totalGB: 100, usadoGB: 50 }],
@@ -126,6 +118,10 @@ export default function ServidoresPage() {
     }
     setIsDialogOpen(false);
   };
+
+  const getSOName = (id: string) => {
+    return sistemasOperativos.find(so => so.id === id)?.nombre || "Desconocido";
+  }
 
   return (
     <Card>
@@ -169,7 +165,7 @@ export default function ServidoresPage() {
             {servidores.map((servidor) => (
               <TableRow key={servidor.id}>
                 <TableCell className="font-medium">{servidor.nombre}</TableCell>
-                <TableCell>{servidor.sistemaOperativo}</TableCell>
+                <TableCell>{getSOName(servidor.sistemaOperativoId)}</TableCell>
                 <TableCell className="text-center">{servidor.cpu}</TableCell>
                 <TableCell className="text-center">{servidor.ramGB}</TableCell>
                 <TableCell>
@@ -228,7 +224,7 @@ export default function ServidoresPage() {
 
                   <FormField
                     control={form.control}
-                    name="sistemaOperativo"
+                    name="sistemaOperativoId"
                     render={({ field }) => (
                       <FormItem className="grid grid-cols-4 items-center gap-4">
                         <Label className="text-right">Sistema Operativo</Label>
@@ -241,7 +237,7 @@ export default function ServidoresPage() {
                             </FormControl>
                             <SelectContent>
                               {sistemasOperativos.map(so => (
-                                <SelectItem key={so} value={so}>{so}</SelectItem>
+                                <SelectItem key={so.id} value={so.id}>{so.nombre}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>

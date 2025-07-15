@@ -1,10 +1,18 @@
-import { Servidor, Motor, Edicion, Licencia, Ambiente, Ubicacion, GrupoSoporte, EstadoOperativo, Compania } from "@/lib/relational-schema";
+import { Servidor, Motor, Edicion, Licencia, Ambiente, Ubicacion, GrupoSoporte, EstadoOperativo, Compania, SistemaOperativo } from "@/lib/relational-schema";
+
+export const mockSistemasOperativos: SistemaOperativo[] = [
+  { id: "so-001", nombre: "Windows Server 2016" },
+  { id: "so-002", nombre: "Windows Server 2019" },
+  { id: "so-003", nombre: "Windows Server 2022" },
+  { id: "so-004", nombre: "Linux" },
+  { id: "so-005", nombre: "Otro" },
+];
 
 export const mockServidores: Servidor[] = [
   { 
     id: "srv-001", 
     nombre: "PROD-SQL-01",
-    sistemaOperativo: "Windows Server 2019",
+    sistemaOperativoId: "so-002", // Windows Server 2019
     cpu: 8,
     ramGB: 64,
     discos: [
@@ -15,7 +23,7 @@ export const mockServidores: Servidor[] = [
   { 
     id: "srv-002", 
     nombre: "DEV-SQL-01",
-    sistemaOperativo: "Windows Server 2022",
+    sistemaOperativoId: "so-003", // Windows Server 2022
     cpu: 4,
     ramGB: 32,
     discos: [
@@ -25,7 +33,7 @@ export const mockServidores: Servidor[] = [
   { 
     id: "srv-003", 
     nombre: "QA-SQL-01",
-    sistemaOperativo: "Linux",
+    sistemaOperativoId: "so-004", // Linux
     cpu: 4,
     ramGB: 32,
     discos: [
