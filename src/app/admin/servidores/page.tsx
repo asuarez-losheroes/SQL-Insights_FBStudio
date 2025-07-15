@@ -92,6 +92,10 @@ export default function ServidoresPage() {
           discos: [{ id: `new-disk-${Date.now()}`, nombre: 'C:', totalGB: 100, usadoGB: 50 }],
         });
       }
+      // Set focus on the first input when the dialog opens
+      setTimeout(() => {
+        form.setFocus("nombre");
+      }, 100);
     }
   }, [editingServidor, isDialogOpen, form]);
 
@@ -384,3 +388,5 @@ export default function ServidoresPage() {
     </Card>
   );
 }
+
+    
