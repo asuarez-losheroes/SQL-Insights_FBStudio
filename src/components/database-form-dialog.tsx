@@ -63,7 +63,6 @@ export default function DatabaseFormDialog({
     defaultValues: database || {
       nombre_bd: '',
       instancia: '',
-      ip: '',
       version: '',
       critico: false,
       monitoreado: false,
@@ -86,7 +85,6 @@ export default function DatabaseFormDialog({
     form.reset(database || {
         nombre_bd: '',
         instancia: '',
-        ip: '',
         version: '',
         critico: false,
         monitoreado: false,
@@ -138,7 +136,6 @@ export default function DatabaseFormDialog({
                 <FormField control={form.control} name="estadoOperativoId" render={({ field }) => (<FormItem><FormLabel>Estado Operativo</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecciona un estado" /></SelectTrigger></FormControl><SelectContent>{estadosOperativos.map(e => (<SelectItem key={e.id} value={e.id}>{e.nombre}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="companiaId" render={({ field }) => (<FormItem><FormLabel>Compañía</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecciona una compañía" /></SelectTrigger></FormControl><SelectContent>{companias.map(c => (<SelectItem key={c.id} value={c.id}>{c.nombre}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="instancia" render={({ field }) => (<FormItem><FormLabel>Instancia</FormLabel><FormControl><Input placeholder="Ej. MSSQLSERVER" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="ip" render={({ field }) => (<FormItem><FormLabel>Dirección IP</FormLabel><FormControl><Input placeholder="Ej. 192.168.1.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="version" render={({ field }) => (<FormItem><FormLabel>Versión</FormLabel><FormControl><Input placeholder="Ej. 15.0.4312.2" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 
                 <div className="grid grid-cols-2 gap-4">

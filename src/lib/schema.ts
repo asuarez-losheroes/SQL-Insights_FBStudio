@@ -4,7 +4,6 @@ export const databaseSchema = z.object({
   id: z.string().optional(),
   nombre_bd: z.string().min(1, "El nombre de la BD es requerido."),
   instancia: z.string().min(1, "La instancia es requerida."),
-  ip: z.string().ip({ message: "Dirección IP inválida." }),
   version: z.string().min(1, "La versión es requerida."),
   critico: z.boolean(),
   monitoreado: z.boolean(),

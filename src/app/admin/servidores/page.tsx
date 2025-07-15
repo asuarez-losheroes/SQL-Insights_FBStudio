@@ -59,6 +59,7 @@ export default function ServidoresPage() {
     resolver: zodResolver(servidorSchema.omit({ id: true })),
     defaultValues: {
       nombre: "",
+      ip: "",
       sistemaOperativoId: "",
       cpu: 1,
       ramGB: 2,
@@ -81,6 +82,7 @@ export default function ServidoresPage() {
       } else {
         form.reset({
           nombre: "",
+          ip: "",
           sistemaOperativoId: "",
           cpu: 1,
           ramGB: 2,
@@ -152,6 +154,7 @@ export default function ServidoresPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Nombre</TableHead>
+              <TableHead>Dirección IP</TableHead>
               <TableHead>Sistema Operativo</TableHead>
               <TableHead className="text-center">CPU</TableHead>
               <TableHead className="text-center">RAM (GB)</TableHead>
@@ -165,6 +168,7 @@ export default function ServidoresPage() {
             {servidores.map((servidor) => (
               <TableRow key={servidor.id}>
                 <TableCell className="font-medium">{servidor.nombre}</TableCell>
+                <TableCell>{servidor.ip}</TableCell>
                 <TableCell>{getSOName(servidor.sistemaOperativoId)}</TableCell>
                 <TableCell className="text-center">{servidor.cpu}</TableCell>
                 <TableCell className="text-center">{servidor.ramGB}</TableCell>
@@ -219,6 +223,14 @@ export default function ServidoresPage() {
                     <div className="col-span-3">
                       <Input id="nombre" {...form.register("nombre")} />
                       {form.formState.errors.nombre && <p className="text-red-500 text-xs mt-1">{form.formState.errors.nombre.message}</p>}
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="ip" className="text-right">Dirección IP</Label>
+                    <div className="col-span-3">
+                      <Input id="ip" {...form.register("ip")} />
+                      {form.formState.errors.ip && <p className="text-red-500 text-xs mt-1">{form.formState.errors.ip.message}</p>}
                     </div>
                   </div>
 

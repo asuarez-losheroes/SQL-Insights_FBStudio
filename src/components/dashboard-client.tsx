@@ -52,11 +52,16 @@ import FileUploadDialog from './file-upload-dialog';
 import DatabaseFormDialog from './database-form-dialog';
 import { useData } from '@/context/data-context';
 import { DatabaseFormValues } from '@/lib/schema';
+import { Servidor } from '@/lib/relational-schema';
 
 // Helper function to find relation name
 const getRelationName = (id: string, collection: {id: string, nombre: string}[]) => {
   return collection.find(item => item.id === id)?.nombre || 'Desconocido';
 };
+
+const getServidorById = (id: string, servidores: Servidor[]) => {
+    return servidores.find(s => s.id === id);
+}
 
 export default function DashboardClient() {
   const { 
@@ -84,10 +89,12 @@ export default function DashboardClient() {
     if (search) {
       const lowercasedSearch = search.toLowerCase();
       result = result.filter(db => {
-        const servidorName = getRelationName(db.servidorId, servidores).toLowerCase();
+        const servidor = getServidorById(db.servidorId, servidores);
+        const servidorName = servidor?.nombre.toLowerCase() || '';
+        const servidorIp = servidor?.ip.toLowerCase() || '';
         return db.nombre_bd.toLowerCase().includes(lowercasedSearch) ||
                servidorName.includes(lowercasedSearch) ||
-               db.ip.toLowerCase().includes(lowercasedSearch)
+               servidorIp.includes(lowercasedSearch);
       });
     }
     if (environment !== 'all') {
@@ -127,25 +134,28 @@ export default function DashboardClient() {
   };
 
   const exportToCsv = () => {
-    const dataToExport = filteredDatabases.map(db => ({
-        "Nombre BD": db.nombre_bd,
-        "Servidor": getRelationName(db.servidorId, servidores),
-        "Motor": getRelationName(db.motorId, motores),
-        "Edición": getRelationName(db.edicionId, ediciones),
-        "Licencia": getRelationName(db.licenciaId, licencias),
-        "Ambiente": getRelationName(db.ambienteId, ambientes),
-        "Ubicación": getRelationName(db.ubicacionId, ubicaciones),
-        "Grupo Soporte": getRelationName(db.grupoSoporteId, gruposSoporte),
-        "Estado": getRelationName(db.estadoOperativoId, estadosOperativos),
-        "Compañía": getRelationName(db.companiaId, companias),
-        "IP": db.ip,
-        "Versión": db.version,
-        "Crítico": db.critico ? 'Si' : 'No',
-        "Monitoreado": db.monitoreado ? 'Si' : 'No',
-        "Respaldo": db.respaldo ? 'Si' : 'No',
-        "Contingencia": db.contingencia ? 'Si' : 'No',
-        "Clúster": db.cluster ? 'Si' : 'No',
-    }));
+    const dataToExport = filteredDatabases.map(db => {
+        const servidor = getServidorById(db.servidorId, servidores);
+        return {
+            "Nombre BD": db.nombre_bd,
+            "Servidor": servidor?.nombre || 'Desconocido',
+            "IP Servidor": servidor?.ip || 'Desconocida',
+            "Motor": getRelationName(db.motorId, motores),
+            "Edición": getRelationName(db.edicionId, ediciones),
+            "Licencia": getRelationName(db.licenciaId, licencias),
+            "Ambiente": getRelationName(db.ambienteId, ambientes),
+            "Ubicación": getRelationName(db.ubicacionId, ubicaciones),
+            "Grupo Soporte": getRelationName(db.grupoSoporteId, gruposSoporte),
+            "Estado": getRelationName(db.estadoOperativoId, estadosOperativos),
+            "Compañía": getRelationName(db.companiaId, companias),
+            "Versión": db.version,
+            "Crítico": db.critico ? 'Si' : 'No',
+            "Monitoreado": db.monitoreado ? 'Si' : 'No',
+            "Respaldo": db.respaldo ? 'Si' : 'No',
+            "Contingencia": db.contingencia ? 'Si' : 'No',
+            "Clúster": db.cluster ? 'Si' : 'No',
+        }
+    });
 
     if (dataToExport.length === 0) return;
 
@@ -352,6 +362,7 @@ export default function DashboardClient() {
           database={{
             ...selectedDb,
             servidor: getRelationName(selectedDb.servidorId, servidores),
+            ip: getServidorById(selectedDb.servidorId, servidores)?.ip || 'N/A',
             motor: getRelationName(selectedDb.motorId, motores),
             edicion: getRelationName(selectedDb.edicionId, ediciones),
             licencia: getRelationName(selectedDb.licenciaId, licencias),
