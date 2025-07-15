@@ -8,11 +8,15 @@ export const relationalSchema = z.object({
 
 // Esquema para los discos de un servidor
 export const discoSchema = z.object({
-  id: z.string(),
+  id: z.string().optional(), // Make id optional for new disks
   nombre: z.string().min(1, "El nombre del disco es requerido."),
   totalGB: z.number().positive("El tamaño total debe ser positivo."),
   usadoGB: z.number().min(0, "El espacio usado no puede ser negativo."),
+}).refine(data => data.usadoGB <= data.totalGB, {
+    message: "El espacio usado no puede ser mayor que el total.",
+    path: ["usadoGB"],
 });
+
 
 // Esquema extendido para Servidor
 export const servidorSchema = relationalSchema.extend({
@@ -20,7 +24,7 @@ export const servidorSchema = relationalSchema.extend({
   sistemaOperativoId: z.string().min(1, "El sistema operativo es requerido."),
   cpu: z.number().int().positive("La cantidad de CPU es requerida."),
   ramGB: z.number().int().positive("La cantidad de RAM es requerida."),
-  discos: z.array(discoSchema).min(1, "Debe haber al menos un disco."),
+  discos: z.array(discoSchema).min(1, "Debe haber al menos un disco.").nonempty("Debe haber al menos un disco."),
 });
 
 // Exportamos tipos específicos para mayor claridad en el código.

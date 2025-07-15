@@ -116,7 +116,7 @@ export default function ServidoresPage() {
     };
 
     if (editingServidor) {
-      updateRelationalData('servidores', { ...editingServidor, ...finalData });
+      updateRelationalData('servidores', { id: editingServidor.id, ...finalData });
     } else {
       addRelationalData('servidores', finalData);
     }
@@ -306,10 +306,12 @@ export default function ServidoresPage() {
                         {form.formState.errors.discos?.[index]?.usadoGB && <p className="text-red-500 text-xs mt-1 col-span-12">{form.formState.errors.discos[index].usadoGB?.message}</p>}
                       </div>
                     ))}
-                    <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => append({ id: `new-${Date.now()}`, nombre: '', totalGB: 0, usadoGB: 0 })}>
+                    <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => append({ id: `new-disk-${Date.now()}`, nombre: '', totalGB: 0, usadoGB: 0 })}>
                       Añadir Disco
                     </Button>
-                    {form.formState.errors.discos && <p className="text-red-500 text-xs mt-1">{form.formState.errors.discos.message}</p>}
+                    {form.formState.errors.discos && typeof form.formState.errors.discos === 'object' && 'message' in form.formState.errors.discos && (
+                      <p className="text-red-500 text-xs mt-1">{form.formState.errors.discos.message}</p>
+                    )}
                   </div>
               </div>
               </ScrollArea>
