@@ -35,9 +35,8 @@ const navItems = [
 ];
 
 const CustomResizeHandle = React.forwardRef<HTMLSpanElement, React.HTMLAttributes<HTMLSpanElement>>((props, ref) => {
-    // La prop 'handleAxis' es interna de ResizableBox y no debe pasarse al span del DOM.
-    // La desestructuramos aquí para omitirla.
-    const { 'data-handle-axis': handleAxis, ...restProps } = props as any;
+    // Desestructuramos para omitir la prop no estándar 'handleAxis' del elemento span.
+    const { handleAxis, ...restProps } = props as any;
 
     return (
       <span
@@ -71,7 +70,7 @@ export default function AdminLayout({
           setWidth(data.size.width);
         }}
         className="hidden md:flex relative flex-col border-r bg-muted/40"
-        handle={<CustomResizeHandle />}
+        handle={(handleAxis, ref) => <CustomResizeHandle ref={ref} handleAxis={handleAxis} />}
       >
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
