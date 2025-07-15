@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -45,7 +46,7 @@ import { servidorSchema, Servidor } from "@/lib/relational-schema";
 import { useData } from "@/context/data-context";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormMessage, FormLabel } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 
 
@@ -223,99 +224,156 @@ export default function ServidoresPage() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
             <ScrollArea className="h-[60vh] p-4">
-              <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="nombre" className="text-right">Nombre</Label>
-                    <div className="col-span-3">
-                      <Input id="nombre" {...form.register("nombre")} />
-                      {form.formState.errors.nombre && <p className="text-red-500 text-xs mt-1">{form.formState.errors.nombre.message}</p>}
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="ip" className="text-right">Dirección IP</Label>
-                    <div className="col-span-3">
-                      <Input id="ip" {...form.register("ip")} />
-                      {form.formState.errors.ip && <p className="text-red-500 text-xs mt-1">{form.formState.errors.ip.message}</p>}
-                    </div>
-                  </div>
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="nombre"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nombre</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
+                <FormField
+                  control={form.control}
+                  name="ip"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Dirección IP</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="sistemaOperativoId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Sistema Operativo</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecciona un S.O." />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {sistemasOperativos.map(so => (
+                              <SelectItem key={so.id} value={so.id}>{so.nombre}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="sistemaOperativoId"
+                    name="cpu"
                     render={({ field }) => (
-                      <FormItem className="grid grid-cols-4 items-center gap-4">
-                        <Label className="text-right">Sistema Operativo</Label>
-                        <div className="col-span-3">
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecciona un S.O." />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {sistemasOperativos.map(so => (
-                                <SelectItem key={so.id} value={so.id}>{so.nombre}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </div>
+                      <FormItem>
+                        <FormLabel>CPU (Cores)</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
+                        </FormControl>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
+                   <FormField
+                    control={form.control}
+                    name="ramGB"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>RAM (GB)</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="cpu" className="text-right">CPU (Cores)</Label>
-                    <div className="col-span-3">
-                      <Input id="cpu" type="number" {...form.register("cpu", { valueAsNumber: true })} />
-                      {form.formState.errors.cpu && <p className="text-red-500 text-xs mt-1">{form.formState.errors.cpu.message}</p>}
+                <div>
+                    <Label className="mb-2 block">Discos</Label>
+                    <div className="space-y-4">
+                      {fields.map((field, index) => (
+                        <div key={field.id} className="grid grid-cols-12 gap-2 items-start p-3 border rounded-md relative">
+                          <div className="col-span-3">
+                             <FormField
+                              control={form.control}
+                              name={`discos.${index}.nombre`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Nombre</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="Ej: C:" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          <div className="col-span-4">
+                             <FormField
+                              control={form.control}
+                              name={`discos.${index}.totalGB`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Total (GB)</FormLabel>
+                                  <FormControl>
+                                    <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          <div className="col-span-4">
+                            <FormField
+                              control={form.control}
+                              name={`discos.${index}.usadoGB`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Usado (GB)</FormLabel>
+                                  <FormControl>
+                                    <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          <div className="col-span-1 self-center pt-8">
+                            <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="ramGB" className="text-right">RAM (GB)</Label>
-                    <div className="col-span-3">
-                      <Input id="ramGB" type="number" {...form.register("ramGB", { valueAsNumber: true })} />
-                      {form.formState.errors.ramGB && <p className="text-red-500 text-xs mt-1">{form.formState.errors.ramGB.message}</p>}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label>Discos</Label>
-                    {fields.map((field, index) => (
-                      <div key={field.id} className="grid grid-cols-12 gap-2 items-center mt-2 p-2 border rounded-md">
-                        <div className="col-span-3">
-                          <Label htmlFor={`discos.${index}.nombre`} className="text-xs">Nombre</Label>
-                          <Input id={`discos.${index}.nombre`} {...form.register(`discos.${index}.nombre`)} placeholder="Ej: C:" />
-                        </div>
-                        <div className="col-span-4">
-                          <Label htmlFor={`discos.${index}.totalGB`} className="text-xs">Total (GB)</Label>
-                          <Input id={`discos.${index}.totalGB`} type="number" {...form.register(`discos.${index}.totalGB`, { valueAsNumber: true })} />
-                        </div>
-                        <div className="col-span-4">
-                          <Label htmlFor={`discos.${index}.usadoGB`} className="text-xs">Usado (GB)</Label>
-                          <Input id={`discos.${index}.usadoGB`} type="number" {...form.register(`discos.${index}.usadoGB`, { valueAsNumber: true })} />
-                        </div>
-                        <div className="col-span-1 self-end">
-                          <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        {form.formState.errors.discos?.[index]?.nombre && <p className="text-red-500 text-xs mt-1 col-span-12">{form.formState.errors.discos[index].nombre?.message}</p>}
-                        {form.formState.errors.discos?.[index]?.totalGB && <p className="text-red-500 text-xs mt-1 col-span-12">{form.formState.errors.discos[index].totalGB?.message}</p>}
-                        {form.formState.errors.discos?.[index]?.usadoGB && <p className="text-red-500 text-xs mt-1 col-span-12">{form.formState.errors.discos[index].usadoGB?.message}</p>}
-                      </div>
-                    ))}
                     <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => append({ id: `new-disk-${Date.now()}`, nombre: '', totalGB: 0, usadoGB: 0 })}>
                       Añadir Disco
                     </Button>
                     {form.formState.errors.discos && typeof form.formState.errors.discos === 'object' && 'message' in form.formState.errors.discos && (
                       <p className="text-red-500 text-xs mt-1">{form.formState.errors.discos.message}</p>
                     )}
-                  </div>
+                </div>
+
               </div>
               </ScrollArea>
-              <DialogFooter>
+              <DialogFooter className="mt-4">
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
                 <Button type="submit">Guardar</Button>
               </DialogFooter>

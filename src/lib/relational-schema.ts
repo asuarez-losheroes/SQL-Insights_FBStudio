@@ -19,7 +19,9 @@ export const discoSchema = z.object({
 
 
 // Esquema extendido para Servidor
-export const servidorSchema = relationalSchema.extend({
+export const servidorSchema = z.object({
+  id: z.string().optional(),
+  nombre: z.string().min(1, "El nombre es requerido."),
   ip: z.string().ip({ message: "Dirección IP inválida." }),
   sistemaOperativoId: z.string().min(1, "El sistema operativo es requerido."),
   cpu: z.number().int().positive("La cantidad de CPU es requerida."),
