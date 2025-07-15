@@ -46,6 +46,7 @@ import { useData } from "@/context/data-context";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { useToast } from "@/hooks/use-toast";
 
 
 type FormData = z.infer<typeof servidorSchema>;
@@ -54,6 +55,7 @@ export default function ServidoresPage() {
   const { servidores, sistemasOperativos, addRelationalData, updateRelationalData, deleteRelationalData } = useData();
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingServidor, setEditingServidor] = React.useState<Servidor | null>(null);
+  const { toast } = useToast();
 
   const form = useForm<FormData>({
     resolver: zodResolver(servidorSchema.omit({ id: true })),
@@ -119,6 +121,10 @@ export default function ServidoresPage() {
       addRelationalData('servidores', finalData);
     }
     setIsDialogOpen(false);
+    toast({
+        title: "Éxito",
+        description: "Servidor guardado correctamente.",
+    })
   };
 
   const getSOName = (id: string) => {
