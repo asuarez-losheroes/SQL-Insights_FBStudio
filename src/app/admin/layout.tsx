@@ -34,6 +34,19 @@ const navItems = [
   { href: "/admin/companias", icon: Building2, label: "Compañías" },
 ];
 
+const CustomResizeHandle = React.forwardRef<HTMLSpanElement>((props, ref) => {
+    return (
+      <span
+        ref={ref}
+        {...props}
+        className="absolute top-0 right-[-5px] z-10 h-full w-[10px] cursor-col-resize group"
+      >
+        <span className="absolute top-0 right-1/2 h-full w-0.5 bg-transparent transition-colors group-hover:bg-border" />
+      </span>
+    );
+});
+CustomResizeHandle.displayName = 'CustomResizeHandle';
+
 export default function AdminLayout({
   children,
 }: {
@@ -53,7 +66,8 @@ export default function AdminLayout({
         onResizeStop={(e, data) => {
           setWidth(data.size.width);
         }}
-        className="hidden md:flex flex-col border-r bg-muted/40"
+        className="hidden md:flex relative flex-col border-r bg-muted/40"
+        handle={<CustomResizeHandle />}
       >
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">

@@ -45,7 +45,7 @@ import { Progress } from "@/components/ui/progress";
 import { servidorSchema, Servidor } from "@/lib/relational-schema";
 import { useData } from "@/context/data-context";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Form, FormControl, FormField, FormItem, FormMessage, FormLabel } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormMessage, FormLabel, FormDescription as FormDescriptionComponent } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 
 
@@ -247,8 +247,11 @@ export default function ServidoresPage() {
                     <FormItem>
                       <FormLabel>Dirección IP</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input placeholder="Ej: 192.168.1.1" {...field} />
                       </FormControl>
+                      <FormDescriptionComponent>
+                        El formato debe ser 255.255.255.255
+                      </FormDescriptionComponent>
                       <FormMessage />
                     </FormItem>
                   )}
