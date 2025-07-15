@@ -312,53 +312,47 @@ export default function ServidoresPage() {
                     <Label className="mb-2 block">Discos</Label>
                     <div className="space-y-4">
                       {fields.map((field, index) => (
-                        <div key={field.id} className="grid grid-cols-12 gap-2 items-start p-3 border rounded-md relative">
-                          <div className="col-span-3">
-                             <FormField
-                              control={form.control}
-                              name={`discos.${index}.nombre`}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Nombre</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="Ej: C:" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                          <div className="col-span-4">
-                             <FormField
-                              control={form.control}
-                              name={`discos.${index}.totalGB`}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Total (GB)</FormLabel>
-                                  <FormControl>
-                                    <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                          <div className="col-span-4">
-                            <FormField
-                              control={form.control}
-                              name={`discos.${index}.usadoGB`}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Usado (GB)</FormLabel>
-                                  <FormControl>
-                                    <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                          <div className="col-span-1 self-center pt-8">
+                        <div key={field.id} className="grid grid-cols-12 gap-2 items-end p-3 border rounded-md relative">
+                          <FormField
+                            control={form.control}
+                            name={`discos.${index}.nombre`}
+                            render={({ field }) => (
+                              <FormItem className="col-span-3">
+                                <FormLabel>Nombre</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Ej: C:" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`discos.${index}.totalGB`}
+                            render={({ field }) => (
+                              <FormItem className="col-span-4">
+                                <FormLabel>Total (GB)</FormLabel>
+                                <FormControl>
+                                  <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`discos.${index}.usadoGB`}
+                            render={({ field }) => (
+                              <FormItem className="col-span-4">
+                                <FormLabel>Usado (GB)</FormLabel>
+                                <FormControl>
+                                  <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <div className="col-span-1">
                             <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
