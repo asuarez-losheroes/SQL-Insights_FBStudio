@@ -47,12 +47,13 @@ import { useData } from "@/context/data-context";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormMessage, FormLabel, FormDescription as FormDescriptionComponent } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 
 type FormData = z.infer<typeof servidorSchema>;
 
 export default function ServidoresPage() {
-  const { servidores, sistemasOperativos, addRelationalData, updateRelationalData, deleteRelationalData } = useData();
+  const { servidores, sistemasOperativos, ambientes, addRelationalData, updateRelationalData, deleteRelationalData } = useData();
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingServidor, setEditingServidor] = React.useState<Servidor | null>(null);
   const { toast } = useToast();
@@ -64,6 +65,7 @@ export default function ServidoresPage() {
       nombre: "",
       ip: "",
       sistemaOperativoId: "",
+      ambienteId: "",
       cpu: 1,
       ramGB: 2,
       discos: [{ nombre: 'C:', totalGB: 100, usadoGB: 50 }],
@@ -87,6 +89,7 @@ export default function ServidoresPage() {
           nombre: "",
           ip: "",
           sistemaOperativoId: "",
+          ambienteId: "",
           cpu: 1,
           ramGB: 2,
           discos: [],
@@ -131,8 +134,8 @@ export default function ServidoresPage() {
     })
   };
 
-  const getSOName = (id: string) => {
-    return sistemasOperativos.find(so => so.id === id)?.nombre || "Desconocido";
+  const getRelationName = (id: string, collection: {id: string, nombre: string}[]) => {
+    return collection.find(item => item.id === id)?.nombre || "Desconocido";
   }
 
   return (
@@ -165,6 +168,7 @@ export default function ServidoresPage() {
             <TableRow>
               <TableHead>Nombre</TableHead>
               <TableHead>Dirección IP</TableHead>
+              <TableHead>Ambiente</TableHead>
               <TableHead>Sistema Operativo</TableHead>
               <TableHead className="text-center">CPU</TableHead>
               <TableHead className="text-center">RAM (GB)</TableHead>
@@ -175,43 +179,49 @@ export default function ServidoresPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {servidores.map((servidor) => (
-              <TableRow key={servidor.id}>
-                <TableCell className="font-medium">{servidor.nombre}</TableCell>
-                <TableCell>{servidor.ip}</TableCell>
-                <TableCell>{getSOName(servidor.sistemaOperativoId)}</TableCell>
-                <TableCell className="text-center">{servidor.cpu}</TableCell>
-                <TableCell className="text-center">{servidor.ramGB}</TableCell>
-                <TableCell>
-                  <div className="flex flex-col gap-2">
-                    {servidor.discos.map(disco => (
-                       <div key={disco.id}>
-                        <div className="flex justify-between text-xs">
-                           <span>{disco.nombre}</span>
-                           <span>{disco.usadoGB} GB / {disco.totalGB} GB</span>
+            {servidores.map((servidor) => {
+                const ambienteName = getRelationName(servidor.ambienteId, ambientes);
+                return (
+                    <TableRow key={servidor.id}>
+                        <TableCell className="font-medium">{servidor.nombre}</TableCell>
+                        <TableCell>{servidor.ip}</TableCell>
+                        <TableCell>
+                            <Badge variant={ambienteName === 'Producción' ? 'destructive' : 'secondary'}>{ambienteName}</Badge>
+                        </TableCell>
+                        <TableCell>{getRelationName(servidor.sistemaOperativoId, sistemasOperativos)}</TableCell>
+                        <TableCell className="text-center">{servidor.cpu}</TableCell>
+                        <TableCell className="text-center">{servidor.ramGB}</TableCell>
+                        <TableCell>
+                        <div className="flex flex-col gap-2">
+                            {servidor.discos.map(disco => (
+                            <div key={disco.id}>
+                                <div className="flex justify-between text-xs">
+                                <span>{disco.nombre}</span>
+                                <span>{disco.usadoGB} GB / {disco.totalGB} GB</span>
+                                </div>
+                                <Progress value={(disco.usadoGB / disco.totalGB) * 100} className="h-2" />
+                            </div>
+                            ))}
                         </div>
-                         <Progress value={(disco.usadoGB / disco.totalGB) * 100} className="h-2" />
-                       </div>
-                    ))}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button aria-haspopup="true" size="icon" variant="ghost">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Alternar menú</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                      <DropdownMenuItem onSelect={() => handleEdit(servidor)}>Editar</DropdownMenuItem>
-                      <DropdownMenuItem onSelect={() => handleDelete(servidor.id)}>Eliminar</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
+                        </TableCell>
+                        <TableCell>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                            <Button aria-haspopup="true" size="icon" variant="ghost">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Alternar menú</span>
+                            </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                            <DropdownMenuItem onSelect={() => handleEdit(servidor)}>Editar</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => handleDelete(servidor.id)}>Eliminar</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        </TableCell>
+                    </TableRow>
+                )
+            })}
           </TableBody>
         </Table>
       </CardContent>
@@ -258,28 +268,52 @@ export default function ServidoresPage() {
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="sistemaOperativoId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Sistema Operativo</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecciona un S.O." />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {sistemasOperativos.map(so => (
-                              <SelectItem key={so.id} value={so.id}>{so.nombre}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                    control={form.control}
+                    name="ambienteId"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Ambiente</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                                <SelectTrigger>
+                                <SelectValue placeholder="Selecciona un Ambiente" />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {ambientes.map(a => (
+                                <SelectItem key={a.id} value={a.id}>{a.nombre}</SelectItem>
+                                ))}
+                            </SelectContent>
+                            </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    <FormField
+                    control={form.control}
+                    name="sistemaOperativoId"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Sistema Operativo</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                                <SelectTrigger>
+                                <SelectValue placeholder="Selecciona un S.O." />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {sistemasOperativos.map(so => (
+                                <SelectItem key={so.id} value={so.id}>{so.nombre}</SelectItem>
+                                ))}
+                            </SelectContent>
+                            </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <FormField

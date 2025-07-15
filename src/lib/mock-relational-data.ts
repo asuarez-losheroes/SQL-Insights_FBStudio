@@ -8,12 +8,20 @@ export const mockSistemasOperativos: SistemaOperativo[] = [
   { id: "so-005", nombre: "Otro" },
 ];
 
+export const mockAmbientes: Ambiente[] = [
+  { id: "amb-001", nombre: "Producción" },
+  { id: "amb-002", nombre: "Desarrollo" },
+  { id: "amb-003", nombre: "Staging" },
+  { id: "amb-004", nombre: "QA" },
+];
+
 export const mockServidores: Servidor[] = [
   { 
     id: "srv-001", 
     nombre: "PROD-SQL-01",
     ip: "192.168.1.10",
     sistemaOperativoId: "so-002", // Windows Server 2019
+    ambienteId: "amb-001", // Producción
     cpu: 8,
     ramGB: 64,
     discos: [
@@ -26,6 +34,7 @@ export const mockServidores: Servidor[] = [
     nombre: "DEV-SQL-01",
     ip: "192.168.1.20",
     sistemaOperativoId: "so-003", // Windows Server 2022
+    ambienteId: "amb-002", // Desarrollo
     cpu: 4,
     ramGB: 32,
     discos: [
@@ -37,6 +46,7 @@ export const mockServidores: Servidor[] = [
     nombre: "QA-SQL-01",
     ip: "10.0.5.30",
     sistemaOperativoId: "so-004", // Linux
+    ambienteId: "amb-004", // QA
     cpu: 4,
     ramGB: 32,
     discos: [
@@ -63,13 +73,6 @@ export const mockLicencias: Licencia[] = [
   { id: "lic-001", nombre: "Por Core" },
   { id: "lic-002", nombre: "Server + CAL" },
   { id: "lic-003", nombre: "Gratuita" },
-];
-
-export const mockAmbientes: Ambiente[] = [
-  { id: "amb-001", nombre: "Producción" },
-  { id: "amb-002", nombre: "Desarrollo" },
-  { id: "amb-003", nombre: "Staging" },
-  { id: "amb-004", nombre: "QA" },
 ];
 
 export const mockUbicaciones: Ubicacion[] = [

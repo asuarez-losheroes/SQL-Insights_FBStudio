@@ -24,6 +24,7 @@ export const servidorSchema = z.object({
   nombre: z.string().min(1, "El nombre es requerido."),
   ip: z.string().ip({ message: "Dirección IP inválida." }),
   sistemaOperativoId: z.string().min(1, "El sistema operativo es requerido."),
+  ambienteId: z.string().min(1, "El ambiente es requerido."),
   cpu: z.number().int().positive("La cantidad de CPU es requerida."),
   ramGB: z.number().int().positive("La cantidad de RAM es requerida."),
   discos: z.array(discoSchema).min(1, "Debe haber al menos un disco.").nonempty("Debe haber al menos un disco."),
