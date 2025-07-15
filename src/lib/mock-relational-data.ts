@@ -83,9 +83,9 @@ export const mockUbicaciones: Ubicacion[] = [
 ];
 
 export const mockGruposSoporte: GrupoSoporte[] = [
-  { id: "grp-001", nombre: "DBA Team" },
-  { id: "grp-002", nombre: "Infraestructura" },
-  { id: "grp-003", nombre: "Soporte Nivel 2" },
+  { id: "grp-001", nombre: "DBA Team", tipo: "Interno", contacto: "Ana Fuentes", email: "ana.fuentes@example.com", telefono: "123456789" },
+  { id: "grp-002", nombre: "Infraestructura Cloud", tipo: "Interno", contacto: "Carlos Díaz", email: "carlos.diaz@example.com", telefono: "987654321" },
+  { id: "grp-003", nombre: "Soporte Externo SQL", tipo: "Externo", contacto: "Pedro Marín", email: "pedro.marin@externo.com", telefono: "555123456" },
 ];
 
 export const mockEstadosOperativos: EstadoOperativo[] = [

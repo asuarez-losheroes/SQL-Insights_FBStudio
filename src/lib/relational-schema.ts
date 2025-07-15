@@ -30,13 +30,23 @@ export const servidorSchema = z.object({
   discos: z.array(discoSchema).min(1, "Debe haber al menos un disco.").nonempty("Debe haber al menos un disco."),
 });
 
+// Esquema extendido para Grupo de Soporte
+export const grupoSoporteSchema = z.object({
+    id: z.string().optional(),
+    nombre: z.string().min(1, "El nombre es requerido."),
+    tipo: z.enum(["Interno", "Externo"], { required_error: "El tipo es requerido." }),
+    contacto: z.string().optional(),
+    email: z.string().email("Email inválido.").optional().or(z.literal('')),
+    telefono: z.string().optional(),
+});
+
+
 // Exportamos tipos específicos para mayor claridad en el código.
 export const motorSchema = relationalSchema;
 export const edicionSchema = relationalSchema;
 export const licenciaSchema = relationalSchema;
 export const ambienteSchema = relationalSchema;
 export const ubicacionSchema = relationalSchema;
-export const grupoSoporteSchema = relationalSchema;
 export const estadoOperativoSchema = relationalSchema;
 export const companiaSchema = relationalSchema;
 export const sistemaOperativoSchema = relationalSchema;
