@@ -44,7 +44,6 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { servidorSchema, Servidor } from "@/lib/relational-schema";
 import { useData } from "@/context/data-context";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormMessage, FormLabel } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
@@ -226,8 +225,7 @@ export default function ServidoresPage() {
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
-            <ScrollArea className="h-[60vh] p-4">
-              <div className="space-y-4">
+            <div tabIndex={-1} className="space-y-4 h-[60vh] p-4 overflow-y-auto">
                 <FormField
                   control={form.control}
                   name="nombre"
@@ -369,7 +367,6 @@ export default function ServidoresPage() {
                 </div>
 
               </div>
-              </ScrollArea>
               <DialogFooter className="mt-4">
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
                 <Button type="submit">Guardar</Button>

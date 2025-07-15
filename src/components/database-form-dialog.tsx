@@ -29,7 +29,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { databaseSchema, DatabaseFormValues } from '@/lib/schema';
 import { useData } from '@/context/data-context';
 
@@ -123,9 +122,8 @@ export default function DatabaseFormDialog({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <ScrollArea className="h-[60vh] p-4">
-              <div className="space-y-4">
-                <FormField control={form.control} name="nombre_bd" render={({ field }) => (<FormItem><FormLabel>Nombre de BD</FormLabel><FormControl><Input placeholder="Ej. mi_base_de_datos" {...field} /></FormControl><FormMessage /></FormItem>)} />
+            <div tabIndex={-1} className="grid grid-cols-2 gap-4 h-[60vh] p-4 overflow-y-auto">
+                <FormField control={form.control} name="nombre_bd" render={({ field }) => (<FormItem className="col-span-2"><FormLabel>Nombre de BD</FormLabel><FormControl><Input placeholder="Ej. mi_base_de_datos" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="servidorId" render={({ field }) => (<FormItem><FormLabel>Servidor</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecciona un servidor" /></SelectTrigger></FormControl><SelectContent>{servidores.map(s => (<SelectItem key={s.id} value={s.id}>{s.nombre}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="motorId" render={({ field }) => (<FormItem><FormLabel>Motor</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecciona un motor" /></SelectTrigger></FormControl><SelectContent>{motores.map(m => (<SelectItem key={m.id} value={m.id}>{m.nombre}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="edicionId" render={({ field }) => (<FormItem><FormLabel>Edición</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecciona una edición" /></SelectTrigger></FormControl><SelectContent>{ediciones.map(e => (<SelectItem key={e.id} value={e.id}>{e.nombre}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
@@ -138,7 +136,7 @@ export default function DatabaseFormDialog({
                 <FormField control={form.control} name="instancia" render={({ field }) => (<FormItem><FormLabel>Instancia</FormLabel><FormControl><Input placeholder="Ej. MSSQLSERVER" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="version" render={({ field }) => (<FormItem><FormLabel>Versión</FormLabel><FormControl><Input placeholder="Ej. 15.0.4312.2" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2 grid grid-cols-2 gap-4">
                   <FormField control={form.control} name="critico" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Crítico</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                   <FormField control={form.control} name="monitoreado" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Monitoreado</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                    <FormField control={form.control} name="respaldo" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Respaldado</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
@@ -146,7 +144,6 @@ export default function DatabaseFormDialog({
                    <FormField control={form.control} name="cluster" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>En Clúster</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                 </div>
               </div>
-            </ScrollArea>
             <DialogFooter className="pt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
