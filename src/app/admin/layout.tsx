@@ -18,7 +18,7 @@ import {
   Home
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ResizableBox } from 'react-resizable';
+import { ResizableBox, type ResizableBoxProps } from 'react-resizable';
 import 'react-resizable/css/styles.css';
 
 const navItems = [
@@ -34,11 +34,15 @@ const navItems = [
   { href: "/admin/companias", icon: Building2, label: "Compañías" },
 ];
 
-const CustomResizeHandle = React.forwardRef<HTMLSpanElement>((props, ref) => {
+const CustomResizeHandle = React.forwardRef<HTMLSpanElement, React.HTMLAttributes<HTMLSpanElement>>((props, ref) => {
+    // La prop 'handleAxis' es interna de ResizableBox y no debe pasarse al span del DOM.
+    // La desestructuramos aquí para omitirla.
+    const { 'data-handle-axis': handleAxis, ...restProps } = props as any;
+
     return (
       <span
         ref={ref}
-        {...props}
+        {...restProps}
         className="absolute top-0 right-[-5px] z-10 h-full w-[10px] cursor-col-resize group"
       >
         <span className="absolute top-0 right-1/2 h-full w-0.5 bg-transparent transition-colors group-hover:bg-border" />
