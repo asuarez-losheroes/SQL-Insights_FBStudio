@@ -12,6 +12,7 @@ import {
   EyeOff,
   Sparkles,
   FileUp,
+  X,
 } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +29,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import {
   Table,
@@ -131,6 +133,13 @@ export default function DashboardClient() {
       const newDb = { ...values, id: `db-${Date.now()}` };
       setDatabases([...databases, newDb]);
     }
+  };
+
+  const handleClearFilters = () => {
+    setSearch('');
+    setEnvironment('all');
+    setCriticality('all');
+    setMonitoring('all');
   };
 
   const exportToCsv = () => {
@@ -248,6 +257,7 @@ export default function DashboardClient() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Filtrar por</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
                         <div className="p-2 space-y-2">
                             <Select value={environment} onValueChange={setEnvironment}>
                                 <SelectTrigger><SelectValue placeholder="Entorno" /></SelectTrigger>
@@ -273,6 +283,11 @@ export default function DashboardClient() {
                                 </SelectContent>
                             </Select>
                         </div>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onSelect={handleClearFilters} className="justify-center">
+                            <X className="mr-2 h-4 w-4" />
+                            Limpiar Filtros
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                     </DropdownMenu>
                     <Button size="sm" variant="outline" className="h-8 gap-1" onClick={exportToCsv}>
