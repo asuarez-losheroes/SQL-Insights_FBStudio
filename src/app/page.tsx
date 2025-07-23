@@ -12,6 +12,7 @@ import {
   Activity,
   Building,
   Monitor,
+  PanelLeft,
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -21,12 +22,26 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet"
+import { Button } from "@/components/ui/button"
 import DashboardClient from '@/components/dashboard-client';
 import { Toaster } from "@/components/ui/toaster"
+
+const navItems = [
+    { href: "/admin/servidores", icon: Server, label: "Servidores" },
+    { href: "/admin/sistemas-operativos", icon: Monitor, label: "Sistemas Operativos" },
+    { href: "/admin/motores", icon: Database, label: "Motores" },
+    { href: "/admin/ediciones", icon: BookCopy, label: "Ediciones" },
+    { href: "/admin/licencias", icon: KeyRound, label: "Licencias" },
+    { href: "/admin/ambientes", icon: Network, label: "Ambientes" },
+    { href: "/admin/ubicaciones", icon: MapPin, label: "Ubicaciones" },
+    { href: "/admin/grupos-soporte", icon: Users, label: "Grupos de Soporte" },
+    { href: "/admin/estados-operativos", icon: Activity, label: "Estados Operativos" },
+    { href: "/admin/companias", icon: Building, label: "Compañías" },
+]
 
 export default function Home() {
   return (
@@ -55,31 +70,18 @@ export default function Home() {
                 <TooltipContent side="right">Panel</TooltipContent>
               </Tooltip>
             
-              <Collapsible>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                      <CollapsibleTrigger asChild>
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8">
-                          <Settings className="h-5 w-5" />
-                          <span className="sr-only">Administrar Datos</span>
-                        </div>
-                      </CollapsibleTrigger>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">Administrar Datos</TooltipContent>
-                </Tooltip>
-                <CollapsibleContent className='flex flex-col items-center gap-4 py-2'>
-                    <Tooltip><TooltipTrigger asChild><Link href="/admin/servidores" className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"><Server className="h-5 w-5" /><span className="sr-only">Servidores</span></Link></TooltipTrigger><TooltipContent side="right">Servidores</TooltipContent></Tooltip>
-                    <Tooltip><TooltipTrigger asChild><Link href="/admin/sistemas-operativos" className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"><Monitor className="h-5 w-5" /><span className="sr-only">Sistemas Operativos</span></Link></TooltipTrigger><TooltipContent side="right">Sistemas Operativos</TooltipContent></Tooltip>
-                    <Tooltip><TooltipTrigger asChild><Link href="/admin/motores" className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"><Database className="h-5 w-5" /><span className="sr-only">Motores</span></Link></TooltipTrigger><TooltipContent side="right">Motores</TooltipContent></Tooltip>
-                    <Tooltip><TooltipTrigger asChild><Link href="/admin/ediciones" className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"><BookCopy className="h-5 w-5" /><span className="sr-only">Ediciones</span></Link></TooltipTrigger><TooltipContent side="right">Ediciones</TooltipContent></Tooltip>
-                    <Tooltip><TooltipTrigger asChild><Link href="/admin/licencias" className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"><KeyRound className="h-5 w-5" /><span className="sr-only">Licencias</span></Link></TooltipTrigger><TooltipContent side="right">Licencias</TooltipContent></Tooltip>
-                    <Tooltip><TooltipTrigger asChild><Link href="/admin/ambientes" className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"><Network className="h-5 w-5" /><span className="sr-only">Ambientes</span></Link></TooltipTrigger><TooltipContent side="right">Ambientes</TooltipContent></Tooltip>
-                    <Tooltip><TooltipTrigger asChild><Link href="/admin/ubicaciones" className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"><MapPin className="h-5 w-5" /><span className="sr-only">Ubicaciones</span></Link></TooltipTrigger><TooltipContent side="right">Ubicaciones</TooltipContent></Tooltip>
-                    <Tooltip><TooltipTrigger asChild><Link href="/admin/grupos-soporte" className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"><Users className="h-5 w-5" /><span className="sr-only">Grupos de Soporte</span></Link></TooltipTrigger><TooltipContent side="right">Grupos de Soporte</TooltipContent></Tooltip>
-                    <Tooltip><TooltipTrigger asChild><Link href="/admin/estados-operativos" className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"><Activity className="h-5 w-5" /><span className="sr-only">Estados Operativos</span></Link></TooltipTrigger><TooltipContent side="right">Estados Operativos</TooltipContent></Tooltip>
-                    <Tooltip><TooltipTrigger asChild><Link href="/admin/companias" className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"><Building className="h-5 w-5" /><span className="sr-only">Compañías</span></Link></TooltipTrigger><TooltipContent side="right">Compañías</TooltipContent></Tooltip>
-                </CollapsibleContent>
-              </Collapsible>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Link
+                        href="/admin/servidores"
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                    >
+                        <Settings className="h-5 w-5" />
+                        <span className="sr-only">Administrar Datos</span>
+                    </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right">Administrar Datos</TooltipContent>
+            </Tooltip>
           </nav>
           <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
               <Tooltip>
@@ -99,6 +101,43 @@ export default function Home() {
       </aside>
       <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
         <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+            <Sheet>
+                <SheetTrigger asChild>
+                    <Button size="icon" variant="outline" className="sm:hidden">
+                    <PanelLeft className="h-5 w-5" />
+                    <span className="sr-only">Toggle Menu</span>
+                    </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="sm:max-w-xs">
+                    <nav className="grid gap-6 text-lg font-medium">
+                        <Link
+                            href="/"
+                            className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
+                        >
+                            <DatabaseZap className="h-5 w-5 transition-all group-hover:scale-110" />
+                            <span className="sr-only">SQL Insights</span>
+                        </Link>
+                         <Link
+                            href="/"
+                            className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                        >
+                            <HomeIcon className="h-5 w-5" />
+                            Panel
+                        </Link>
+                        <p className="px-2.5 text-muted-foreground">Administración</p>
+                        {navItems.map((item) => (
+                             <Link
+                                key={item.href}
+                                href={item.href}
+                                className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                            >
+                                <item.icon className="h-5 w-5" />
+                                {item.label}
+                            </Link>
+                        ))}
+                    </nav>
+                </SheetContent>
+            </Sheet>
           <h1 className="text-xl font-semibold">Panel de Perspectivas SQL</h1>
         </header>
         <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">

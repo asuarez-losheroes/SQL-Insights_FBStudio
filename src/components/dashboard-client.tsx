@@ -240,10 +240,9 @@ export default function DashboardClient() {
 
       <Card>
         <CardHeader>
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-4">
-                    <h2 className="text-lg font-semibold">Inventario de Bases de Datos</h2>
-                    <Input placeholder="Buscar bases de datos..." value={search} onChange={e => setSearch(e.target.value)} className="w-64" />
+                    <Input placeholder="Buscar bases de datos..." value={search} onChange={e => setSearch(e.target.value)} className="w-full sm:w-64" />
                 </div>
                 <div className="flex items-center gap-2">
                     <DropdownMenu>
@@ -299,13 +298,13 @@ export default function DashboardClient() {
                     <Button size="sm" variant="outline" className="h-8 gap-1" onClick={() => setFileUploadDialogOpen(true)}>
                       <FileUp className="h-3.5 w-3.5" />
                       <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                          Importar Datos
+                          Importar
                       </span>
                     </Button>
                     <Button size="sm" className="h-8 gap-1" onClick={handleCreate}>
                       <PlusCircle className="h-3.5 w-3.5" />
                       <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                          Crear Base de Datos
+                          Crear
                       </span>
                     </Button>
                 </div>
@@ -316,11 +315,10 @@ export default function DashboardClient() {
             <TableHeader>
               <TableRow>
                 <TableHead>Nombre de BD</TableHead>
-                <TableHead>Servidor</TableHead>
-                <TableHead>Ambiente</TableHead>
-                <TableHead>Estado</TableHead>
+                <TableHead className="hidden sm:table-cell">Servidor</TableHead>
+                <TableHead className="hidden sm:table-cell">Ambiente</TableHead>
+                <TableHead className="hidden md:table-cell">Estado</TableHead>
                 <TableHead>Crítica</TableHead>
-                <TableHead>Monitoreada</TableHead>
                 <TableHead>
                   <span className="sr-only">Acciones</span>
                 </TableHead>
@@ -332,18 +330,20 @@ export default function DashboardClient() {
                 const estadoName = getRelationName(db.estadoOperativoId, estadosOperativos);
                 return (
                   <TableRow key={db.id}>
-                    <TableCell className="font-medium">{db.nombre_bd}</TableCell>
-                    <TableCell>{getRelationName(db.servidorId, servidores)}</TableCell>
-                    <TableCell>
+                    <TableCell className="font-medium">
+                        <div>{db.nombre_bd}</div>
+                        <div className="text-sm text-muted-foreground sm:hidden">{getRelationName(db.servidorId, servidores)}</div>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">{getRelationName(db.servidorId, servidores)}</TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       <Badge variant={ambienteName === 'Producción' ? 'destructive' : 'secondary'}>{ambienteName}</Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">
                       <Badge variant={estadoName === 'Operacional' || estadoName === 'En Línea' ? 'default' : 'outline' } className={estadoName === 'Operacional' || estadoName === 'En Línea' ? 'bg-green-500 text-white' : ''}>
                         {estadoName}
                       </Badge>
                     </TableCell>
                     <TableCell>{db.critico ? 'Si' : 'No'}</TableCell>
-                    <TableCell>{db.monitoreado ? 'Si' : 'No'}</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

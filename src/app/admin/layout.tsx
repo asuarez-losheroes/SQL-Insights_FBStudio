@@ -15,11 +15,20 @@ import {
   Users,
   Activity,
   Building2,
-  Home
+  Home,
+  PanelLeft,
+  DatabaseZap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ResizableBox, type ResizableBoxProps } from 'react-resizable';
+import { ResizableBox } from 'react-resizable';
 import 'react-resizable/css/styles.css';
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet"
+import { Button } from "@/components/ui/button"
+
 
 const navItems = [
   { href: "/admin/sistemas-operativos", icon: Laptop, label: "Sistemas Operativos" },
@@ -35,7 +44,7 @@ const navItems = [
 ];
 
 const CustomResizeHandle = React.forwardRef<HTMLSpanElement, React.HTMLAttributes<HTMLSpanElement>>((props, ref) => {
-    // Desestructuramos para omitir la prop no estándar 'handleAxis' del elemento span.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { handleAxis, ...restProps } = props as any;
 
     return (
@@ -60,6 +69,7 @@ export default function AdminLayout({
 
   return (
     <div className="flex min-h-screen w-full">
+      {/* Desktop Sidebar */}
       <ResizableBox 
         width={width}
         height={Infinity}
@@ -98,8 +108,56 @@ export default function AdminLayout({
           </div>
         </div>
       </ResizableBox>
-       <main className="flex flex-1 flex-col p-4 sm:gap-4 sm:py-4">
-            {children}
+
+       <main className="flex flex-1 flex-col">
+          {/* Mobile Header */}
+          <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 md:hidden">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button size="icon" variant="outline" className="md:hidden">
+                    <PanelLeft className="h-5 w-5" />
+                    <span className="sr-only">Toggle Menu</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="sm:max-w-xs">
+                  <nav className="grid gap-6 text-lg font-medium">
+                    <Link
+                      href="/"
+                      className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
+                    >
+                      <DatabaseZap className="h-5 w-5 transition-all group-hover:scale-110" />
+                      <span className="sr-only">SQL Insights</span>
+                    </Link>
+                    <Link
+                      href="/"
+                      className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                    >
+                      <Home className="h-5 w-5" />
+                      Inicio
+                    </Link>
+                    {navItems.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={cn(
+                          "flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground",
+                           pathname === item.href && "text-foreground"
+                        )}
+                      >
+                        <item.icon className="h-5 w-5" />
+                        {item.label}
+                      </Link>
+                    ))}
+                  </nav>
+                </SheetContent>
+              </Sheet>
+              <div className="flex-1">
+                <h1 className="font-semibold text-lg">Administración</h1>
+              </div>
+            </header>
+            <div className="flex flex-1 flex-col p-4 sm:gap-4 sm:py-4">
+              {children}
+            </div>
         </main>
     </div>
   );
