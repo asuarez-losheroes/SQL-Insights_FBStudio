@@ -45,10 +45,8 @@ const navItems = [
   { href: "/admin/companias", icon: Building2, label: "Compañías" },
 ];
 
-const CustomResizeHandle = React.forwardRef<HTMLSpanElement, React.HTMLAttributes<HTMLSpanElement>>((props, ref) => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { handleaxis, ...restProps } = props as any;
-
+const CustomResizeHandle = React.forwardRef<HTMLSpanElement, any>((props, ref) => {
+    const { handleAxis, ...restProps } = props;
     return (
       <span
         ref={ref}
