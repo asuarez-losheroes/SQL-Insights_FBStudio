@@ -25,6 +25,8 @@ import 'react-resizable/css/styles.css';
 import {
   Sheet,
   SheetContent,
+  SheetHeader,
+  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
@@ -45,7 +47,7 @@ const navItems = [
 
 const CustomResizeHandle = React.forwardRef<HTMLSpanElement, React.HTMLAttributes<HTMLSpanElement>>((props, ref) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { handleAxis, ...restProps } = props as any;
+    const { handleaxis, ...restProps } = props as any;
 
     return (
       <span
@@ -120,7 +122,10 @@ export default function AdminLayout({
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="sm:max-w-xs">
-                  <nav className="grid gap-6 text-lg font-medium">
+                   <SheetHeader>
+                    <SheetTitle>Menú de Administración</SheetTitle>
+                  </SheetHeader>
+                  <nav className="grid gap-6 text-lg font-medium mt-4">
                     <Link
                       href="/"
                       className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"

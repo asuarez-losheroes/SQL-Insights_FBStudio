@@ -24,6 +24,8 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetHeader,
+  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
@@ -109,33 +111,36 @@ export default function Home() {
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="sm:max-w-xs">
-                    <nav className="grid gap-6 text-lg font-medium">
-                        <Link
-                            href="/"
-                            className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
-                        >
-                            <DatabaseZap className="h-5 w-5 transition-all group-hover:scale-110" />
-                            <span className="sr-only">SQL Insights</span>
-                        </Link>
-                         <Link
-                            href="/"
-                            className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                        >
-                            <HomeIcon className="h-5 w-5" />
-                            Panel
-                        </Link>
-                        <p className="px-2.5 text-muted-foreground">Administración</p>
-                        {navItems.map((item) => (
-                             <Link
-                                key={item.href}
-                                href={item.href}
-                                className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                            >
-                                <item.icon className="h-5 w-5" />
-                                {item.label}
-                            </Link>
-                        ))}
-                    </nav>
+                  <SheetHeader>
+                    <SheetTitle>Navegación</SheetTitle>
+                  </SheetHeader>
+                  <nav className="grid gap-6 text-lg font-medium mt-4">
+                      <Link
+                          href="/"
+                          className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
+                      >
+                          <DatabaseZap className="h-5 w-5 transition-all group-hover:scale-110" />
+                          <span className="sr-only">SQL Insights</span>
+                      </Link>
+                       <Link
+                          href="/"
+                          className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                      >
+                          <HomeIcon className="h-5 w-5" />
+                          Panel
+                      </Link>
+                      <p className="px-2.5 text-muted-foreground">Administración</p>
+                      {navItems.map((item) => (
+                           <Link
+                              key={item.href}
+                              href={item.href}
+                              className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                          >
+                              <item.icon className="h-5 w-5" />
+                              {item.label}
+                          </Link>
+                      ))}
+                  </nav>
                 </SheetContent>
             </Sheet>
           <h1 className="text-xl font-semibold">Panel de Perspectivas SQL</h1>
