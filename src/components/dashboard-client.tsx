@@ -73,11 +73,12 @@ const getServidorById = (id: string, servidores: Servidor[]) => {
 
 export default function DashboardClient() {
   const { 
-    sistemas, criticidades, tiposSistema, ambientes, servidores,
-    motores, ediciones, licencias, ubicaciones, gruposSoporte, companias, estadosOperativos
+    sistemas, criticidades, tiposSistema, ambientes, servidores, databases: initialDatabases,
+    motores, ediciones, licencias, ubicaciones, gruposSoporte, companias, estadosOperativos,
+    deleteRelationalData
   } = useData();
   
-  const [databases, setDatabases] = React.useState<DatabaseFormValues[]>(mockDatabases);
+  const [databases, setDatabases] = React.useState<DatabaseFormValues[]>(initialDatabases);
   
   // Modal states
   const [selectedDb, setSelectedDb] = React.useState<DatabaseFormValues | null>(null);
@@ -100,6 +101,10 @@ export default function DashboardClient() {
     setEditingDb(db);
     setFormDialogOpen(true);
   };
+
+  const handleDelete = (id: string) => {
+    setDatabases(databases.filter(db => db.id !== id));
+  }
 
   const handleSave = (values: DatabaseFormValues) => {
     if (editingDb) {
@@ -250,7 +255,7 @@ export default function DashboardClient() {
                             <Sparkles className="mr-2 h-4 w-4" /> Obtener Recomendaciones de IA
                           </DropdownMenuItem>
                           <DropdownMenuItem onSelect={() => handleEdit(db)}>Editar</DropdownMenuItem>
-                          <DropdownMenuItem>Eliminar</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => handleDelete(db.id!)}>Eliminar</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

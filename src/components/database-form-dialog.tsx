@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Dialog,
@@ -39,6 +39,25 @@ interface DatabaseFormDialogProps {
   database: DatabaseFormValues | null;
 }
 
+const defaultFormValues: DatabaseFormValues = {
+    nombre_bd: '',
+    instancia: '',
+    version: '',
+    critico: false,
+    monitoreado: false,
+    respaldo: false,
+    contingencia: false,
+    cluster: false,
+    servidorId: '',
+    motorId: '',
+    edicionId: '',
+    licenciaId: '',
+    ubicacionId: '',
+    grupoSoporteId: '',
+    estadoOperativoId: '',
+    companiaId: '',
+}
+
 export default function DatabaseFormDialog({
   isOpen,
   onOpenChange,
@@ -46,6 +65,8 @@ export default function DatabaseFormDialog({
   database,
 }: DatabaseFormDialogProps) {
   const {
+    sistemas,
+    ambientes,
     servidores,
     motores,
     ediciones,
@@ -56,53 +77,49 @@ export default function DatabaseFormDialog({
     companias,
   } = useData();
 
+  const [selectedSistema, setSelectedSistema] = React.useState<string | null>(null);
+  const [selectedAmbiente, setSelectedAmbiente] = React.useState<string | null>(null);
+
   const form = useForm<DatabaseFormValues>({
     resolver: zodResolver(databaseSchema),
-    defaultValues: database || {
-      nombre_bd: '',
-      instancia: '',
-      version: '',
-      critico: false,
-      monitoreado: false,
-      respaldo: false,
-      contingencia: false,
-      cluster: false,
-      servidorId: '',
-      motorId: '',
-      edicionId: '',
-      licenciaId: '',
-      ubicacionId: '',
-      grupoSoporteId: '',
-      estadoOperativoId: '',
-      companiaId: '',
-    },
+    defaultValues: database || defaultFormValues,
   });
+  
+  const watchedAmbienteId = useWatch({ control: form.control, name: 'servidorId' });
 
   React.useEffect(() => {
-    form.reset(database || {
-        nombre_bd: '',
-        instancia: '',
-        version: '',
-        critico: false,
-        monitoreado: false,
-        respaldo: false,
-        contingencia: false,
-        cluster: false,
-        servidorId: '',
-        motorId: '',
-        edicionId: '',
-        licenciaId: '',
-        ubicacionId: '',
-        grupoSoporteId: '',
-        estadoOperativoId: '',
-        companiaId: '',
-    });
-  }, [database, form, isOpen]);
+    if (database) {
+      const servidor = servidores.find(s => s.id === database.servidorId);
+      const ambiente = ambientes.find(a => a.id === servidor?.ambienteId);
+      setSelectedSistema(ambiente?.sistemaId || null);
+      setSelectedAmbiente(ambiente?.id || null);
+      form.reset(database);
+    } else {
+      setSelectedSistema(null);
+      setSelectedAmbiente(null);
+      form.reset(defaultFormValues);
+    }
+  }, [database, isOpen, form, servidores, ambientes]);
 
   const onSubmit = (values: DatabaseFormValues) => {
     onSave(values);
     onOpenChange(false);
   };
+
+  const handleSistemaChange = (sistemaId: string) => {
+    setSelectedSistema(sistemaId);
+    setSelectedAmbiente(null);
+    form.setValue('servidorId', '');
+  };
+  
+  const handleAmbienteChange = (ambienteId: string) => {
+      setSelectedAmbiente(ambienteId);
+      form.setValue('servidorId', '');
+  };
+
+  const filteredAmbientes = selectedSistema ? ambientes.filter(a => a.sistemaId === selectedSistema) : [];
+  const filteredServidores = selectedAmbiente ? servidores.filter(s => s.ambienteId === selectedAmbiente) : [];
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -121,7 +138,32 @@ export default function DatabaseFormDialog({
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <div tabIndex={-1} className="grid grid-cols-2 gap-4 h-[60vh] p-4 overflow-y-auto">
                 <FormField control={form.control} name="nombre_bd" render={({ field }) => (<FormItem className="col-span-2"><FormLabel>Nombre de BD</FormLabel><FormControl><Input placeholder="Ej. mi_base_de_datos" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="servidorId" render={({ field }) => (<FormItem><FormLabel>Servidor</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecciona un servidor" /></SelectTrigger></FormControl><SelectContent>{servidores.map(s => (<SelectItem key={s.id} value={s.id}>{s.nombre}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+                
+                {/* Campos de Selección Jerárquica */}
+                <div className="col-span-2 grid grid-cols-2 gap-4">
+                    <FormItem>
+                        <FormLabel>Sistema</FormLabel>
+                        <Select onValueChange={handleSistemaChange} value={selectedSistema || ''}>
+                            <FormControl>
+                                <SelectTrigger><SelectValue placeholder="1. Selecciona un Sistema" /></SelectTrigger>
+                            </FormControl>
+                            <SelectContent>{sistemas.map(s => (<SelectItem key={s.id} value={s.id!}>{s.nombre}</SelectItem>))}</SelectContent>
+                        </Select>
+                    </FormItem>
+                     <FormItem>
+                        <FormLabel>Ambiente</FormLabel>
+                        <Select onValueChange={handleAmbienteChange} value={selectedAmbiente || ''} disabled={!selectedSistema}>
+                            <FormControl>
+                                <SelectTrigger><SelectValue placeholder="2. Selecciona un Ambiente" /></SelectTrigger>
+                            </FormControl>
+                            <SelectContent>{filteredAmbientes.map(a => (<SelectItem key={a.id} value={a.id!}>{a.nombre}</SelectItem>))}</SelectContent>
+                        </Select>
+                    </FormItem>
+                </div>
+
+                <FormField control={form.control} name="servidorId" render={({ field }) => (<FormItem className="col-span-2"><FormLabel>Servidor</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!selectedAmbiente}><FormControl><SelectTrigger><SelectValue placeholder="3. Selecciona un Servidor" /></SelectTrigger></FormControl><SelectContent>{filteredServidores.map(s => (<SelectItem key={s.id} value={s.id!}>{s.nombre}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+
+
                 <FormField control={form.control} name="motorId" render={({ field }) => (<FormItem><FormLabel>Motor</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecciona un motor" /></SelectTrigger></FormControl><SelectContent>{motores.map(m => (<SelectItem key={m.id} value={m.id}>{m.nombre}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="edicionId" render={({ field }) => (<FormItem><FormLabel>Edición</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecciona una edición" /></SelectTrigger></FormControl><SelectContent>{ediciones.map(e => (<SelectItem key={e.id} value={e.id}>{e.nombre}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="licenciaId" render={({ field }) => (<FormItem><FormLabel>Licencia</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecciona una licencia" /></SelectTrigger></FormControl><SelectContent>{licencias.map(l => (<SelectItem key={l.id} value={l.id}>{l.nombre}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
