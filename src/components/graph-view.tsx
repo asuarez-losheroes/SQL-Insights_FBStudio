@@ -27,7 +27,6 @@ const getRelationName = (id: string, collection: {id: string, nombre: string}[])
 
 // Function to calculate radius based on text length
 const calculateRadius = (label: string) => {
-    // These values are experimental and can be adjusted.
     const baseRadius = 15;
     const charWidth = 7.5; 
     const padding = 20;
@@ -71,21 +70,26 @@ export default function GraphView() {
     };
     
     companias.forEach(c => addNode({ id: c.id!, label: c.nombre, type: 'compania', data: c }));
+    
+    // Create a map of systems to companies based on DBs
+    const systemToCompanyMap = new Map<string, string>();
+    dbs.forEach(db => {
+        const server = servidores.find(srv => srv.id === db.servidorId);
+        if (!server) return;
+        const ambiente = ambientes.find(a => a.id === server.ambienteId);
+        if (!ambiente) return;
+        if (ambiente.sistemaId && db.companiaId) {
+            systemToCompanyMap.set(ambiente.sistemaId, db.companiaId);
+        }
+    });
 
     sistemas.forEach(s => {
       addNode({ id: s.id!, label: s.nombre, type: 'sistema', data: s });
-      // Heurística para encontrar la compañía a la que pertenece el sistema
-      const companyIdForSystem = companias.find(c => dbs.some(db => {
-          if (db.companiaId !== c.id) return false;
-          const server = servidores.find(srv => srv.id === db.servidorId);
-          const ambiente = ambientes.find(a => a.id === server?.ambienteId);
-          return ambiente?.sistemaId === s.id;
-      }))?.id;
-      
-      // Si no se encuentra una compañía a través de las BBDD, se conecta a la primera
-      if (companyIdForSystem) {
-           addEdge(companyIdForSystem, s.id!);
+      const companyId = systemToCompanyMap.get(s.id!);
+      if (companyId) {
+           addEdge(companyId, s.id!);
       } else if (companias.length > 0) {
+           // Fallback: connect to the first company if no specific link is found
            addEdge(companias[0].id!, s.id!)
       }
     });
@@ -114,8 +118,8 @@ export default function GraphView() {
             radius: calculateRadius(node.label),
             x: pos?.x,
             y: pos?.y,
-            fx: pos ? pos.x : null,
-            fy: pos ? pos.y : null,
+            fx: pos?.x,
+            fy: pos?.y,
         }
     });
 
@@ -139,19 +143,18 @@ export default function GraphView() {
 
     
     const drag = (simulation: d3.Simulation<GraphNode, undefined>) => {
-        const dragstarted = (event: d3.D3DragEvent<SVGGElement, GraphNode, any>, d: GraphNode) => {
+        function dragstarted(event: d3.D3DragEvent<Element, GraphNode, any>, d: GraphNode) {
             if (!event.active) simulation.alphaTarget(0.3).restart();
             d.fx = d.x;
             d.fy = d.y;
-            event.sourceEvent.stopPropagation();
         }
         
-        const dragged = (event: d3.D3DragEvent<SVGGElement, GraphNode, any>, d: GraphNode) => {
+        function dragged(event: d3.D3DragEvent<Element, GraphNode, any>, d: GraphNode) {
             d.fx = event.x;
             d.fy = event.y;
         }
         
-        const dragended = (event: d3.D3DragEvent<SVGGElement, GraphNode, any>, d: GraphNode) => {
+        function dragended(event: d3.D3DragEvent<Element, GraphNode, any>, d: GraphNode) {
             if (!event.active) simulation.alphaTarget(0);
             nodePositionsRef.current.set(d.id, { x: d.fx!, y: d.fy! });
         }
@@ -198,14 +201,15 @@ export default function GraphView() {
     switch (node.type) {
         case 'compania': {
             const companySistemas = sistemas.filter(s => {
-                return dbs.some(db => {
-                    if (db.companiaId !== node.id) return false;
-                    const server = servidores.find(srv => srv.id === db.servidorId);
-                    const ambiente = ambientes.find(a => a.id === server?.ambienteId);
-                    return ambiente?.sistemaId === s.id;
+                // Find which company this system belongs to
+                const server = servidores.find(srv => {
+                    const ambiente = ambientes.find(a => a.sistemaId === s.id);
+                    return srv.ambienteId === ambiente?.id;
                 });
+                const db = dbs.find(d => d.servidorId === server?.id);
+                return db?.companiaId === node.id;
             });
-             details = { 'Sistemas': companySistemas.length };
+            details = { 'Sistemas': companySistemas.length };
             break;
         }
         case 'sistema':
@@ -281,8 +285,8 @@ export default function GraphView() {
                 const dist = Math.sqrt(dx * dx + dy * dy);
                 
                 const targetRadius = (targetNode as any).radius || 20;
-                const endX = targetNode.x - (dx / dist) * (targetRadius + 5); // Increased offset
-                const endY = targetNode.y - (dy / dist) * (targetRadius + 5); // Increased offset
+                const endX = targetNode.x - (dx / dist) * (targetRadius + 5);
+                const endY = targetNode.y - (dy / dist) * (targetRadius + 5);
 
                 return (
                 <line
@@ -334,6 +338,4 @@ export default function GraphView() {
     </Card>
   );
 }
-
-
 
