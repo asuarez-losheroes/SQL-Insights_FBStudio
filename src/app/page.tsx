@@ -2,17 +2,10 @@ import {
   DatabaseZap,
   Home as HomeIcon,
   Settings,
-  Server,
-  Database,
-  BookCopy,
-  KeyRound,
-  Network,
-  MapPin,
-  Users,
-  Activity,
-  Building,
-  Monitor,
   PanelLeft,
+  Briefcase,
+  GitGraph,
+  List
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -31,18 +24,14 @@ import {
 import { Button } from "@/components/ui/button"
 import DashboardClient from '@/components/dashboard-client';
 import { Toaster } from "@/components/ui/toaster"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import GraphView from '@/components/graph-view';
+
 
 const navItems = [
-    { href: "/admin/servidores", icon: Server, label: "Servidores" },
-    { href: "/admin/sistemas-operativos", icon: Monitor, label: "Sistemas Operativos" },
-    { href: "/admin/motores", icon: Database, label: "Motores" },
-    { href: "/admin/ediciones", icon: BookCopy, label: "Ediciones" },
-    { href: "/admin/licencias", icon: KeyRound, label: "Licencias" },
-    { href: "/admin/ambientes", icon: Network, label: "Ambientes" },
-    { href: "/admin/ubicaciones", icon: MapPin, label: "Ubicaciones" },
-    { href: "/admin/grupos-soporte", icon: Users, label: "Grupos de Soporte" },
-    { href: "/admin/estados-operativos", icon: Activity, label: "Estados Operativos" },
-    { href: "/admin/companias", icon: Building, label: "Compañías" },
+    { href: "/admin/sistemas", icon: Briefcase, label: "Sistemas" },
+    { href: "/admin/ambientes", icon: List, label: "Ambientes" },
+    { href: "/admin/servidores", icon: Settings, label: "Infraestructura" },
 ]
 
 export default function Home() {
@@ -75,29 +64,15 @@ export default function Home() {
             <Tooltip>
                 <TooltipTrigger asChild>
                     <Link
-                        href="/admin/servidores"
+                        href="/admin/sistemas"
                         className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
                     >
                         <Settings className="h-5 w-5" />
-                        <span className="sr-only">Administrar Datos</span>
+                        <span className="sr-only">Administración</span>
                     </Link>
                 </TooltipTrigger>
-                <TooltipContent side="right">Administrar Datos</TooltipContent>
+                <TooltipContent side="right">Administración</TooltipContent>
             </Tooltip>
-          </nav>
-          <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Link
-                    href="#"
-                    className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
-                  >
-                    <Settings className="h-5 w-5" />
-                    <span className="sr-only">Configuración</span>
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent side="right">Configuración</TooltipContent>
-              </Tooltip>
           </nav>
         </TooltipProvider>
       </aside>
@@ -127,7 +102,7 @@ export default function Home() {
                           className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
                       >
                           <HomeIcon className="h-5 w-5" />
-                          Panel
+                          Panel Principal
                       </Link>
                       <p className="px-2.5 text-muted-foreground">Administración</p>
                       {navItems.map((item) => (
@@ -143,10 +118,24 @@ export default function Home() {
                   </nav>
                 </SheetContent>
             </Sheet>
-          <h1 className="text-xl font-semibold">Panel de Perspectivas SQL</h1>
+          <h1 className="text-xl font-semibold">Panel de Sistemas</h1>
         </header>
-        <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
-          <DashboardClient />
+        <main className="flex-1 p-4 sm:px-6 sm:py-0">
+            <Tabs defaultValue="list-view">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-2xl font-bold tracking-tight">Sistemas de Negocio</h2>
+                    <TabsList>
+                        <TabsTrigger value="list-view"><List className="mr-2 h-4 w-4"/>Vista de Lista</TabsTrigger>
+                        <TabsTrigger value="graph-view"><GitGraph className="mr-2 h-4 w-4"/>Vista de Grafo</TabsTrigger>
+                    </TabsList>
+                </div>
+                <TabsContent value="list-view">
+                    <DashboardClient />
+                </TabsContent>
+                <TabsContent value="graph-view" className="h-[75vh]">
+                    <GraphView />
+                </TabsContent>
+            </Tabs>
         </main>
       </div>
       <Toaster />

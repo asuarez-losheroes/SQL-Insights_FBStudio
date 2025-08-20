@@ -7,7 +7,6 @@ import { usePathname } from "next/navigation";
 import {
   Cog,
   Server,
-  Laptop,
   BookCopy,
   KeyRound,
   Layers,
@@ -17,7 +16,12 @@ import {
   Building2,
   Home,
   PanelLeft,
-  DatabaseZap
+  DatabaseZap,
+  Laptop,
+  Network,
+  ShieldCheck,
+  Tag,
+  Briefcase
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ResizableBox } from 'react-resizable';
@@ -33,12 +37,15 @@ import { Button } from "@/components/ui/button"
 
 
 const navItems = [
-  { href: "/admin/sistemas-operativos", icon: Laptop, label: "Sistemas Operativos" },
+  { href: "/admin/sistemas", icon: Briefcase, label: "Sistemas" },
+  { href: "/admin/ambientes", icon: Layers, label: "Ambientes de Sistema" },
+  { href: "/admin/criticidades", icon: ShieldCheck, label: "Criticidades" },
+  { href: "/admin/tipos-sistema", icon: Tag, label: "Tipos de Sistema" },
   { href: "/admin/servidores", icon: Server, label: "Servidores" },
+  { href: "/admin/sistemas-operativos", icon: Laptop, label: "Sistemas Operativos" },
   { href: "/admin/motores", icon: Cog, label: "Motores de BD" },
   { href: "/admin/ediciones", icon: BookCopy, label: "Ediciones" },
   { href: "/admin/licencias", icon: KeyRound, label: "Licencias" },
-  { href: "/admin/ambientes", icon: Layers, label: "Ambientes" },
   { href: "/admin/ubicaciones", icon: MapPin, label: "Ubicaciones" },
   { href: "/admin/grupos-soporte", icon: Users, label: "Grupos de Soporte" },
   { href: "/admin/estados-operativos", icon: Activity, label: "Estados Operativos" },

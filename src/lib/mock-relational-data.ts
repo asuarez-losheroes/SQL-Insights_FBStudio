@@ -1,4 +1,59 @@
-import { Servidor, Motor, Edicion, Licencia, Ambiente, Ubicacion, GrupoSoporte, EstadoOperativo, Compania, SistemaOperativo } from "@/lib/relational-schema";
+import { 
+    Servidor, Motor, Edicion, Licencia, Ambiente, Ubicacion, GrupoSoporte, 
+    EstadoOperativo, Compania, SistemaOperativo, Sistema, Criticidad, TipoSistema 
+} from "@/lib/relational-schema";
+
+export const mockCriticidades: Criticidad[] = [
+  { id: "crit-001", nombre: "Alta" },
+  { id: "crit-002", nombre: "Media" },
+  { id: "crit-003", nombre: "Baja" },
+];
+
+export const mockTiposSistema: TipoSistema[] = [
+    { id: "tipo-001", nombre: "Core Bancario" },
+    { id: "tipo-002", nombre: "Canales Digitales" },
+    { id: "tipo-003", nombre: "Gestión Interna" },
+];
+
+export const mockSistemas: Sistema[] = [
+    {
+        id: "sis-001",
+        nombre: "Bantotal",
+        descripcion: "Sistema central para operaciones bancarias y financieras.",
+        criticidadId: "crit-001", // Alta
+        tipoSistemaId: "tipo-001", // Core Bancario
+        responsableNegocio: "Gerencia de Operaciones",
+        responsableTecnico: "Equipo Core",
+    },
+    {
+        id: "sis-002",
+        nombre: "App Móvil Clientes",
+        descripcion: "Aplicación móvil para clientes finales.",
+        criticidadId: "crit-001", // Alta
+        tipoSistemaId: "tipo-002", // Canales Digitales
+        responsableNegocio: "Gerencia de Canales",
+        responsableTecnico: "Equipo de Desarrollo Móvil",
+    },
+    {
+        id: "sis-003",
+        nombre: "CRM Interno",
+        descripcion: "Plataforma de gestión de relación con clientes para ejecutivos.",
+        criticidadId: "crit-002", // Media
+        tipoSistemaId: "tipo-003", // Gestión Interna
+        responsableNegocio: "Gerencia Comercial",
+        responsableTecnico: "Equipo de TI Interno",
+    },
+];
+
+export const mockAmbientes: Ambiente[] = [
+  // Ambientes para Bantotal
+  { id: "amb-bt-prod", sistemaId: "sis-001", nombre: "Producción", descripcion: "Ambiente productivo de Bantotal.", urlAcceso: "https://bantotal.example.com" },
+  { id: "amb-bt-qa", sistemaId: "sis-001", nombre: "QA", descripcion: "Ambiente de pruebas de calidad para Bantotal.", urlAcceso: "https://qa-bantotal.example.com" },
+  { id: "amb-bt-dev", sistemaId: "sis-001", nombre: "Desarrollo", descripcion: "Ambiente de desarrollo para Bantotal.", urlAcceso: "https://dev-bantotal.example.com" },
+  // Ambientes para App Móvil
+  { id: "amb-app-prod", sistemaId: "sis-002", nombre: "Producción", descripcion: "API y servicios productivos para la app móvil.", urlAcceso: "https://api.example.com" },
+  { id: "amb-app-staging", sistemaId: "sis-002", nombre: "Staging", descripcion: "Ambiente pre-productivo para la app móvil.", urlAcceso: "https://staging-api.example.com" },
+];
 
 export const mockSistemasOperativos: SistemaOperativo[] = [
   { id: "so-001", nombre: "Windows Server 2016" },
@@ -8,50 +63,42 @@ export const mockSistemasOperativos: SistemaOperativo[] = [
   { id: "so-005", nombre: "Otro" },
 ];
 
-export const mockAmbientes: Ambiente[] = [
-  { id: "amb-001", nombre: "Producción" },
-  { id: "amb-002", nombre: "Desarrollo" },
-  { id: "amb-003", nombre: "Staging" },
-  { id: "amb-004", nombre: "QA" },
-];
-
 export const mockServidores: Servidor[] = [
   { 
     id: "srv-001", 
-    nombre: "PROD-SQL-01",
-    ip: "192.168.1.10",
-    sistemaOperativoId: "so-002", // Windows Server 2019
-    ambienteId: "amb-001", // Producción
-    cpu: 8,
-    ramGB: 64,
+    nombre: "PROD-BANTOTAL-DB-01",
+    ip: "10.10.1.10",
+    sistemaOperativoId: "so-002",
+    ambienteId: "amb-bt-prod", // Producción de Bantotal
+    cpu: 16,
+    ramGB: 128,
     discos: [
       { id: "disk-001", nombre: "C:", totalGB: 200, usadoGB: 150 },
-      { id: "disk-002", nombre: "D:", totalGB: 1024, usadoGB: 800 },
+      { id: "disk-002", nombre: "D:", totalGB: 2048, usadoGB: 1800 },
     ]
   },
   { 
     id: "srv-002", 
-    nombre: "DEV-SQL-01",
-    ip: "192.168.1.20",
-    sistemaOperativoId: "so-003", // Windows Server 2022
-    ambienteId: "amb-002", // Desarrollo
-    cpu: 4,
-    ramGB: 32,
+    nombre: "QA-BANTOTAL-DB-01",
+    ip: "10.20.1.10",
+    sistemaOperativoId: "so-003",
+    ambienteId: "amb-bt-qa", // QA de Bantotal
+    cpu: 8,
+    ramGB: 64,
     discos: [
-      { id: "disk-003", nombre: "C:", totalGB: 100, usadoGB: 50 },
+      { id: "disk-003", nombre: "C:", totalGB: 200, usadoGB: 100 },
     ]
   },
   { 
     id: "srv-003", 
-    nombre: "QA-SQL-01",
-    ip: "10.0.5.30",
+    nombre: "PROD-API-APP-01",
+    ip: "10.10.2.20",
     sistemaOperativoId: "so-004", // Linux
-    ambienteId: "amb-004", // QA
-    cpu: 4,
-    ramGB: 32,
+    ambienteId: "amb-app-prod", // Producción de App Móvil
+    cpu: 8,
+    ramGB: 64,
     discos: [
-      { id: "disk-004", nombre: "C:", totalGB: 150, usadoGB: 75 },
-      { id: "disk-005", nombre: "E:", totalGB: 500, usadoGB: 250 },
+      { id: "disk-004", nombre: "/", totalGB: 500, usadoGB: 250 },
     ]
   },
 ];

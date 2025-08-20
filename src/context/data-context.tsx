@@ -2,38 +2,29 @@
 
 import * as React from "react";
 import {
-  Servidor,
-  Motor,
-  Edicion,
-  Licencia,
-  Ambiente,
-  Ubicacion,
-  GrupoSoporte,
-  EstadoOperativo,
-  Compania,
-  SistemaOperativo,
+  Servidor, Motor, Edicion, Licencia, Ambiente, Ubicacion, GrupoSoporte,
+  EstadoOperativo, Compania, SistemaOperativo, Sistema, Criticidad, TipoSistema
 } from "@/lib/relational-schema";
 import {
-  mockServidores,
-  mockMotores,
-  mockEdiciones,
-  mockLicencias,
-  mockAmbientes,
-  mockUbicaciones,
-  mockGruposSoporte,
-  mockEstadosOperativos,
-  mockCompanias,
-  mockSistemasOperativos,
+  mockServidores, mockMotores, mockEdiciones, mockLicencias, mockAmbientes,
+  mockUbicaciones, mockGruposSoporte, mockEstadosOperativos, mockCompanias,
+  mockSistemasOperativos, mockSistemas, mockCriticidades, mockTiposSistema
 } from "@/lib/mock-relational-data";
 
-type RelationalData = Servidor | Motor | Edicion | Licencia | Ambiente | Ubicacion | GrupoSoporte | EstadoOperativo | Compania | SistemaOperativo;
+type RelationalData = Servidor | Motor | Edicion | Licencia | Ambiente | Ubicacion | GrupoSoporte | EstadoOperativo | Compania | SistemaOperativo | Sistema | Criticidad | TipoSistema;
 
 type DataContextType = {
+  // Nuevas entidades
+  sistemas: Sistema[];
+  criticidades: Criticidad[];
+  tiposSistema: TipoSistema[];
+  ambientes: Ambiente[];
+
+  // Entidades existentes
   servidores: Servidor[];
   motores: Motor[];
   ediciones: Edicion[];
   licencias: Licencia[];
-  ambientes: Ambiente[];
   ubicaciones: Ubicacion[];
   gruposSoporte: GrupoSoporte[];
   estadosOperativos: EstadoOperativo[];
@@ -75,11 +66,17 @@ const addState = <T extends { id: string }>(
 
 
 export const DataProvider = ({ children }: { children: React.ReactNode }) => {
+  // Nuevos estados
+  const [sistemas, setSistemas] = React.useState(mockSistemas);
+  const [criticidades, setCriticidades] = React.useState(mockCriticidades);
+  const [tiposSistema, setTiposSistema] = React.useState(mockTiposSistema);
+  const [ambientes, setAmbientes] = React.useState(mockAmbientes);
+
+  // Estados existentes
   const [servidores, setServidores] = React.useState(mockServidores);
   const [motores, setMotores] = React.useState(mockMotores);
   const [ediciones, setEdiciones] = React.useState(mockEdiciones);
   const [licencias, setLicencias] = React.useState(mockLicencias);
-  const [ambientes, setAmbientes] = React.useState(mockAmbientes);
   const [ubicaciones, setUbicaciones] = React.useState(mockUbicaciones);
   const [gruposSoporte, setGruposSoporte] = React.useState(mockGruposSoporte);
   const [estadosOperativos, setEstadosOperativos] = React.useState(mockEstadosOperativos);
@@ -87,11 +84,14 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
   const [sistemasOperativos, setSistemasOperativos] = React.useState(mockSistemasOperativos);
   
   const setters: Record<string, React.Dispatch<React.SetStateAction<any[]>>> = {
+    sistemas: setSistemas,
+    criticidades: setCriticidades,
+    tiposSistema: setTiposSistema,
+    ambientes: setAmbientes,
     servidores: setServidores,
     motores: setMotores,
     ediciones: setEdiciones,
     licencias: setLicencias,
-    ambientes: setAmbientes,
     ubicaciones: setUbicaciones,
     gruposSoporte: setGruposSoporte,
     estadosOperativos: setEstadosOperativos,
@@ -100,11 +100,14 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const prefixes: Record<string, string> = {
+    sistemas: 'sis',
+    criticidades: 'crit',
+    tiposSistema: 'tipo',
+    ambientes: 'amb',
     servidores: 'srv',
     motores: 'mot',
     ediciones: 'edi',
     licencias: 'lic',
-    ambientes: 'amb',
     ubicaciones: 'ubi',
     gruposSoporte: 'grp',
     estadosOperativos: 'est',
@@ -135,11 +138,14 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const value = {
+    sistemas,
+    criticidades,
+    tiposSistema,
+    ambientes,
     servidores,
     motores,
     ediciones,
     licencias,
-    ambientes,
     ubicaciones,
     gruposSoporte,
     estadosOperativos,

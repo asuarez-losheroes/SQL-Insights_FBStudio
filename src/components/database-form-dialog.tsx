@@ -50,7 +50,6 @@ export default function DatabaseFormDialog({
     motores,
     ediciones,
     licencias,
-    ambientes,
     ubicaciones,
     gruposSoporte,
     estadosOperativos,
@@ -72,7 +71,6 @@ export default function DatabaseFormDialog({
       motorId: '',
       edicionId: '',
       licenciaId: '',
-      ambienteId: '',
       ubicacionId: '',
       grupoSoporteId: '',
       estadoOperativoId: '',
@@ -94,7 +92,6 @@ export default function DatabaseFormDialog({
         motorId: '',
         edicionId: '',
         licenciaId: '',
-        ambienteId: '',
         ubicacionId: '',
         grupoSoporteId: '',
         estadoOperativoId: '',
@@ -128,7 +125,6 @@ export default function DatabaseFormDialog({
                 <FormField control={form.control} name="motorId" render={({ field }) => (<FormItem><FormLabel>Motor</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecciona un motor" /></SelectTrigger></FormControl><SelectContent>{motores.map(m => (<SelectItem key={m.id} value={m.id}>{m.nombre}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="edicionId" render={({ field }) => (<FormItem><FormLabel>Edición</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecciona una edición" /></SelectTrigger></FormControl><SelectContent>{ediciones.map(e => (<SelectItem key={e.id} value={e.id}>{e.nombre}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="licenciaId" render={({ field }) => (<FormItem><FormLabel>Licencia</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecciona una licencia" /></SelectTrigger></FormControl><SelectContent>{licencias.map(l => (<SelectItem key={l.id} value={l.id}>{l.nombre}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="ambienteId" render={({ field }) => (<FormItem><FormLabel>Ambiente</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecciona un ambiente" /></SelectTrigger></FormControl><SelectContent>{ambientes.map(a => (<SelectItem key={a.id} value={a.id}>{a.nombre}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="ubicacionId" render={({ field }) => (<FormItem><FormLabel>Ubicación</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecciona una ubicación" /></SelectTrigger></FormControl><SelectContent>{ubicaciones.map(u => (<SelectItem key={u.id} value={u.id}>{u.nombre}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="grupoSoporteId" render={({ field }) => (<FormItem><FormLabel>Grupo de Soporte</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecciona un grupo" /></SelectTrigger></FormControl><SelectContent>{gruposSoporte.map(g => (<SelectItem key={g.id} value={g.id}>{g.nombre}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="estadoOperativoId" render={({ field }) => (<FormItem><FormLabel>Estado Operativo</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecciona un estado" /></SelectTrigger></FormControl><SelectContent>{estadosOperativos.map(e => (<SelectItem key={e.id} value={e.id}>{e.nombre}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />

@@ -11,12 +11,16 @@ export const databaseSchema = z.object({
   contingencia: z.boolean(),
   cluster: z.boolean(),
 
-  // Campos que ahora son relacionales (guardamos el ID)
+  // Se mantiene el ID del servidor
   servidorId: z.string().min(1, "El servidor es requerido."),
+  
+  // El ambiente ahora se deriva del servidor
+  // ambienteId: z.string().min(1, "El ambiente es requerido."),
+  
+  // Campos que siguen siendo catálogos directos
   motorId: z.string().min(1, "El motor es requerido."),
   edicionId: z.string().min(1, "La edición es requerida."),
   licenciaId: z.string().min(1, "La licencia es requerida."),
-  ambienteId: z.string().min(1, "El ambiente es requerido."),
   ubicacionId: z.string().min(1, "La ubicación es requerida."),
   grupoSoporteId: z.string().min(1, "El grupo de soporte es requerido."),
   estadoOperativoId: z.string().min(1, "El estado operativo es requerido."),

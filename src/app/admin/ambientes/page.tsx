@@ -3,6 +3,10 @@
 import * as React from "react";
 import Link from 'next/link';
 import { PlusCircle, MoreHorizontal, Home } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
 import {
   Table,
   TableBody,
@@ -32,40 +36,52 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { ambienteSchema, Ambiente } from "@/lib/relational-schema";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { useData } from "@/context/data-context";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 
 type FormData = z.infer<typeof ambienteSchema>;
 
 export default function AmbientesPage() {
-  const { ambientes, addRelationalData, updateRelationalData, deleteRelationalData } = useData();
+  const { ambientes, sistemas, addRelationalData, updateRelationalData, deleteRelationalData } = useData();
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingAmbiente, setEditingAmbiente] = React.useState<Ambiente | null>(null);
+  const { toast } = useToast();
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<Omit<FormData, 'id'>>({
+  const form = useForm<FormData>({
     resolver: zodResolver(ambienteSchema.omit({ id: true })),
+    mode: 'onChange',
   });
+
+  React.useEffect(() => {
+    if (isDialogOpen) {
+      if (editingAmbiente) {
+        form.reset(editingAmbiente);
+      } else {
+        form.reset({
+          nombre: "",
+          descripcion: "",
+          sistemaId: "",
+          urlAcceso: "",
+        });
+      }
+    }
+  }, [editingAmbiente, isDialogOpen, form]);
+
 
   const handleCreate = () => {
     setEditingAmbiente(null);
-    reset({ nombre: "" });
     setIsDialogOpen(true);
   };
 
   const handleEdit = (ambiente: Ambiente) => {
     setEditingAmbiente(ambiente);
-    reset(ambiente);
     setIsDialogOpen(true);
   };
   
@@ -75,20 +91,28 @@ export default function AmbientesPage() {
 
   const onSubmit = (data: Omit<FormData, 'id'>) => {
     if (editingAmbiente) {
-      updateRelationalData('ambientes', { ...editingAmbiente, ...data });
+      updateRelationalData('ambientes', { id: editingAmbiente.id, ...data });
     } else {
       addRelationalData('ambientes', data);
     }
     setIsDialogOpen(false);
+    toast({
+        title: "Éxito",
+        description: "Ambiente guardado correctamente.",
+    })
   };
+
+  const getSystemName = (systemId: string) => {
+    return sistemas.find(s => s.id === systemId)?.nombre || "Desconocido";
+  }
 
   return (
     <Card>
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle>Ambientes</CardTitle>
-            <CardDescription>Administra los ambientes de las bases de datos.</CardDescription>
+            <CardTitle>Ambientes de Sistema</CardTitle>
+            <CardDescription>Administra los ambientes (Producción, QA, etc.) para cada sistema.</CardDescription>
           </div>
           <div className="flex gap-2">
             <Link href="/" passHref>
@@ -111,6 +135,8 @@ export default function AmbientesPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Nombre</TableHead>
+              <TableHead>Sistema</TableHead>
+              <TableHead>URL de Acceso</TableHead>
               <TableHead>
                 <span className="sr-only">Acciones</span>
               </TableHead>
@@ -120,6 +146,10 @@ export default function AmbientesPage() {
             {ambientes.map((ambiente) => (
               <TableRow key={ambiente.id}>
                 <TableCell className="font-medium">{ambiente.nombre}</TableCell>
+                <TableCell>{getSystemName(ambiente.sistemaId)}</TableCell>
+                <TableCell>
+                    {ambiente.urlAcceso ? <a href={ambiente.urlAcceso} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{ambiente.urlAcceso}</a> : 'N/A'}
+                </TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -142,33 +172,82 @@ export default function AmbientesPage() {
       </CardContent>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <DialogHeader>
-              <DialogTitle>{editingAmbiente ? "Editar Ambiente" : "Añadir Ambiente"}</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="nombre" className="text-right">
-                  Nombre
-                </Label>
-                <div className="col-span-3">
-                  <Input
-                    id="nombre"
-                    {...register("nombre")}
-                    className={errors.nombre ? "border-red-500" : ""}
-                  />
-                  {errors.nombre && (
-                    <p className="text-red-500 text-xs mt-1">{errors.nombre.message}</p>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>{editingAmbiente ? "Editar Ambiente" : "Añadir Ambiente"}</DialogTitle>
+            <DialogDescription>
+                {editingAmbiente ? "Edita la información del ambiente." : "Añade un nuevo ambiente a un sistema."}
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="space-y-4 p-4">
+                <FormField
+                  control={form.control}
+                  name="sistemaId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Sistema</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona un sistema" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {sistemas.map(s => <SelectItem key={s.id} value={s.id}>{s.nombre}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </div>
+                />
+                <FormField
+                  control={form.control}
+                  name="nombre"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nombre del Ambiente</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Ej: Producción, QA, Desarrollo" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="descripcion"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Descripción</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Describe el propósito de este ambiente" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="urlAcceso"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>URL de Acceso (Opcional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-              <Button type="submit">Guardar</Button>
-            </DialogFooter>
-          </form>
+              <DialogFooter className="mt-4">
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+                <Button type="submit">Guardar</Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </Card>

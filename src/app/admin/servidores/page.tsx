@@ -53,7 +53,7 @@ import { Badge } from "@/components/ui/badge";
 type FormData = z.infer<typeof servidorSchema>;
 
 export default function ServidoresPage() {
-  const { servidores, sistemasOperativos, ambientes, addRelationalData, updateRelationalData, deleteRelationalData } = useData();
+  const { servidores, sistemasOperativos, ambientes, sistemas, addRelationalData, updateRelationalData, deleteRelationalData } = useData();
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingServidor, setEditingServidor] = React.useState<Servidor | null>(null);
   const { toast } = useToast();
@@ -134,8 +134,14 @@ export default function ServidoresPage() {
     })
   };
 
-  const getRelationName = (id: string, collection: {id: string, nombre: string}[]) => {
-    return collection.find(item => item.id === id)?.nombre || "Desconocido";
+  const getAmbienteInfo = (ambienteId: string) => {
+    const ambiente = ambientes.find(a => a.id === ambienteId);
+    if (!ambiente) return { ambienteName: 'Desconocido', sistemaName: 'Desconocido' };
+    const sistema = sistemas.find(s => s.id === ambiente.sistemaId);
+    return {
+        ambienteName: ambiente.nombre,
+        sistemaName: sistema?.nombre || 'Desconocido'
+    }
   }
 
   return (
@@ -168,7 +174,7 @@ export default function ServidoresPage() {
             <TableRow>
               <TableHead>Nombre</TableHead>
               <TableHead>Dirección IP</TableHead>
-              <TableHead>Ambiente</TableHead>
+              <TableHead>Sistema / Ambiente</TableHead>
               <TableHead>Sistema Operativo</TableHead>
               <TableHead className="text-center">CPU</TableHead>
               <TableHead className="text-center">RAM (GB)</TableHead>
@@ -180,15 +186,16 @@ export default function ServidoresPage() {
           </TableHeader>
           <TableBody>
             {servidores.map((servidor) => {
-                const ambienteName = getRelationName(servidor.ambienteId, ambientes);
+                const { ambienteName, sistemaName } = getAmbienteInfo(servidor.ambienteId);
                 return (
                     <TableRow key={servidor.id}>
                         <TableCell className="font-medium">{servidor.nombre}</TableCell>
                         <TableCell>{servidor.ip}</TableCell>
                         <TableCell>
+                            <div>{sistemaName}</div>
                             <Badge variant={ambienteName === 'Producción' ? 'destructive' : 'secondary'}>{ambienteName}</Badge>
                         </TableCell>
-                        <TableCell>{getRelationName(servidor.sistemaOperativoId, sistemasOperativos)}</TableCell>
+                        <TableCell>{sistemasOperativos.find(so => so.id === servidor.sistemaOperativoId)?.nombre || 'Desconocido'}</TableCell>
                         <TableCell className="text-center">{servidor.cpu}</TableCell>
                         <TableCell className="text-center">{servidor.ramGB}</TableCell>
                         <TableCell>
@@ -282,8 +289,12 @@ export default function ServidoresPage() {
                                 </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                {ambientes.map(a => (
-                                <SelectItem key={a.id} value={a.id}>{a.nombre}</SelectItem>
+                                {sistemas.map(sistema => (
+                                    <optgroup key={sistema.id} label={sistema.nombre}>
+                                        {ambientes.filter(a => a.sistemaId === sistema.id).map(a => (
+                                            <SelectItem key={a.id} value={a.id}>{a.nombre}</SelectItem>
+                                        ))}
+                                    </optgroup>
                                 ))}
                             </SelectContent>
                             </Select>
@@ -400,7 +411,7 @@ export default function ServidoresPage() {
                       Añadir Disco
                     </Button>
                     {form.formState.errors.discos && typeof form.formState.errors.discos === 'object' && 'message' in form.formState.errors.discos && (
-                      <p className="text-red-500 text-xs mt-1">{form.formState.errors.discos.message as string}</p>
+                      <p className="text-sm font-medium text-destructive">{form.formState.errors.discos.message as string}</p>
                     )}
                 </div>
 
