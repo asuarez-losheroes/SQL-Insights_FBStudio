@@ -47,6 +47,7 @@ export default function GraphView() {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const zoomGroupRef = React.useRef<SVGGElement>(null);
   const nodePositionsRef = React.useRef<Map<string, {x: number, y: number}>>(new Map());
+  const zoomRef = React.useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
 
 
   React.useEffect(() => {
@@ -193,6 +194,8 @@ export default function GraphView() {
       .on('zoom', (event) => {
         g.attr('transform', event.transform.toString());
       });
+    
+    zoomRef.current = zoom;
       
     svgElement.call(zoom as any).on("dblclick.zoom", null);
     
@@ -211,31 +214,21 @@ export default function GraphView() {
   }, [graphData]);
 
   const handleZoomIn = () => {
+    if (!svgRef.current || !zoomRef.current) return;
     const svgElement = d3Selection.select(svgRef.current);
-    const zoomBehavior = d3Zoom.zoom<SVGSVGElement, unknown>().scaleBy;
-    svgElement.transition().duration(250).call(zoomBehavior, 1.2);
+    svgElement.transition().duration(250).call(zoomRef.current.scaleBy, 1.2);
   };
   
   const handleZoomOut = () => {
+    if (!svgRef.current || !zoomRef.current) return;
     const svgElement = d3Selection.select(svgRef.current);
-    const zoomBehavior = d3Zoom.zoom<SVGSVGElement, unknown>().scaleBy;
-    svgElement.transition().duration(250).call(zoomBehavior, 0.8);
+    svgElement.transition().duration(250).call(zoomRef.current.scaleBy, 0.8);
   };
   
   const handleResetZoom = () => {
-      if (!containerRef.current) return;
-      const width = containerRef.current.clientWidth;
-      const height = containerRef.current.clientHeight;
-
-      const svgElement = d3Selection.select(svgRef.current);
-      const zoomBehavior = d3Zoom.zoom<SVGSVGElement, unknown>().transform;
-      svgElement.transition().duration(500).call(zoomBehavior, d3Zoom.zoomIdentity.translate(0, 0).scale(1));
-
-      // Re-center simulation
-      const simulation = (svgElement.node() as any).__d3Simulation;
-      if (simulation) {
-        simulation.force('center', d3.forceCenter(width / 2, height / 2)).alpha(0.3).restart();
-      }
+    if (!containerRef.current || !svgRef.current || !zoomRef.current) return;
+    const svgElement = d3Selection.select(svgRef.current);
+    svgElement.transition().duration(500).call(zoomRef.current.transform, d3Zoom.zoomIdentity);
   };
 
 
@@ -244,35 +237,16 @@ export default function GraphView() {
 
     switch (node.type) {
         case 'compania': {
-            const companyId = node.id;
-            
-            const linkedSystems = new Set<string>();
-            
-            ambientes.forEach(ambiente => {
-                const sistema = sistemas.find(s => s.id === ambiente.sistemaId);
-                if (sistema) {
-                    const hasDbInCompany = dbs.some(db => 
-                        db.companiaId === companyId && 
-                        servidores.some(srv => 
-                            srv.ambienteId === ambiente.id && 
-                            db.servidorId === srv.id
-                        )
-                    );
-                    
-                    if (hasDbInCompany) {
-                        linkedSystems.add(sistema.id!);
-                    }
+             const linkedSystems = sistemas.filter(s => {
+                const systemAmbientes = ambientes.filter(a => a.sistemaId === s.id);
+                if (systemAmbientes.length === 0) {
+                    return companias.length > 0 && companias[0].id === node.id;
                 }
+                const systemServidores = servidores.filter(srv => systemAmbientes.some(a => a.id === srv.ambienteId));
+                const systemDBs = dbs.filter(db => systemServidores.some(srv => srv.id === db.servidorId));
+                return systemDBs.some(db => db.companiaId === node.id);
             });
-
-            const orphanSystems = sistemas.filter(s => 
-                !ambientes.some(a => a.sistemaId === s.id) && 
-                companias.length > 0 && companias[0].id === companyId
-            );
-
-            orphanSystems.forEach(s => linkedSystems.add(s.id!));
-            
-            details = { 'Sistemas': linkedSystems.size };
+            details = { 'Sistemas': linkedSystems.length };
             break;
         }
         case 'sistema':
