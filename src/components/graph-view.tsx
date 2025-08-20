@@ -11,13 +11,15 @@ import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
 
 const NODE_RADIUS: { [key: string]: number } = {
+  compania: 32,
   sistema: 28,
-  ambiente: 22,
-  servidor: 18,
-  database: 14,
+  ambiente: 24,
+  servidor: 20,
+  database: 16,
 };
 
 const NODE_COLORS: { [key: string]: string } = {
+  compania: 'hsl(var(--destructive))',
   sistema: 'hsl(var(--primary))',
   ambiente: 'hsl(var(--accent))',
   servidor: 'hsl(var(--chart-2))',
@@ -31,7 +33,7 @@ const getRelationName = (id: string, collection: {id: string, nombre: string}[])
 
 export default function GraphView() {
   const allData = useData();
-  const { sistemas, ambientes, servidores, databases: dbs } = allData;
+  const { companias, sistemas, ambientes, servidores, databases: dbs } = allData;
   const [graphData, setGraphData] = React.useState<GraphData>({ nodes: [], edges: [] });
   const [simulatedNodes, setSimulatedNodes] = React.useState<GraphNode[]>([]);
   const [simulatedEdges, setSimulatedEdges] = React.useState<d3.SimulationLinkDatum<GraphNode>[]>([]);
@@ -43,38 +45,58 @@ export default function GraphView() {
     const edges: GraphEdge[] = [];
     const nodeIds = new Set<string>();
 
-    sistemas.forEach(s => {
-      nodes.push({ id: s.id!, label: s.nombre, type: 'sistema', data: s });
-      nodeIds.add(s.id!);
+    // 1. Start with Companies
+    companias.forEach(c => {
+        nodes.push({ id: c.id!, label: c.nombre, type: 'compania', data: c });
+        nodeIds.add(c.id!);
     });
 
-    ambientes.forEach(a => {
-      if (nodeIds.has(a.sistemaId)) {
-        nodes.push({ id: a.id!, label: a.nombre, type: 'ambiente', data: a });
-        edges.push({ id: `e-${a.sistemaId}-${a.id}`, source: a.sistemaId, target: a.id! });
-        nodeIds.add(a.id!);
-      }
-    });
-
-    servidores.forEach(s => {
-       if (nodeIds.has(s.ambienteId)) {
-        nodes.push({ id: s.id!, label: s.nombre, type: 'servidor', data: s });
-        edges.push({ id: `e-${s.ambienteId}-${s.id}`, source: s.ambienteId, target: s.id! });
-        nodeIds.add(s.id!);
-      }
-    });
-
+    // 2. Link Databases to Companies and build up from there
     dbs.forEach(db => {
-      if (nodeIds.has(db.servidorId)) {
-        nodes.push({ id: db.id!, label: db.nombre_bd, type: 'database', data: db });
-        edges.push({ id: `e-${db.servidorId}-${db.id}`, source: db.servidorId, target: db.id! });
-        nodeIds.add(db.id!);
-      }
+        if (nodeIds.has(db.companiaId)) {
+            // Add DB node if it doesn't exist
+            if (!nodeIds.has(db.id!)) {
+                nodes.push({ id: db.id!, label: db.nombre_bd, type: 'database', data: db });
+                nodeIds.add(db.id!);
+            }
+
+            // Add Server node if it doesn't exist
+            const server = servidores.find(s => s.id === db.servidorId);
+            if (server && !nodeIds.has(server.id!)) {
+                nodes.push({ id: server.id!, label: server.nombre, type: 'servidor', data: server });
+                nodeIds.add(server.id!);
+                edges.push({ id: `e-${server.id}-${db.id}`, source: server.id!, target: db.id! });
+            } else if (server) {
+                // Ensure edge exists even if server node was already added
+                 const edgeId = `e-${server.id}-${db.id}`;
+                 if (!edges.some(e => e.id === edgeId)) {
+                    edges.push({ id: edgeId, source: server.id!, target: db.id! });
+                 }
+            }
+            
+            // Add Ambiente node if it doesn't exist
+            const ambiente = ambientes.find(a => a.id === server?.ambienteId);
+            if (ambiente && !nodeIds.has(ambiente.id!)) {
+                nodes.push({ id: ambiente.id!, label: ambiente.nombre, type: 'ambiente', data: ambiente });
+                nodeIds.add(ambiente.id!);
+                edges.push({ id: `e-${ambiente.id}-${server!.id}`, source: ambiente.id!, target: server!.id! });
+            }
+
+            // Add Sistema node if it doesn't exist
+            const sistema = sistemas.find(s => s.id === ambiente?.sistemaId);
+            if (sistema && !nodeIds.has(sistema.id!)) {
+                 nodes.push({ id: sistema.id!, label: sistema.nombre, type: 'sistema', data: sistema });
+                 nodeIds.add(sistema.id!);
+                 edges.push({ id: `e-${sistema.id}-${ambiente!.id}`, source: sistema.id!, target: ambiente!.id! });
+                 // Link Sistema to its Company
+                 edges.push({ id: `e-${db.companiaId}-${sistema.id}`, source: db.companiaId, target: sistema.id! });
+            }
+        }
     });
     
     setGraphData({ nodes, edges });
 
-  }, [sistemas, ambientes, servidores, dbs]);
+  }, [companias, sistemas, ambientes, servidores, dbs]);
 
 
   React.useEffect(() => {
@@ -84,10 +106,10 @@ export default function GraphView() {
     const height = containerRef.current.clientHeight;
 
     const simulation = d3.forceSimulation(graphData.nodes as d3.SimulationNodeDatum[])
-      .force('link', d3.forceLink(graphData.edges).id((d: any) => d.id).distance(90))
-      .force('charge', d3.forceManyBody().strength(-500))
+      .force('link', d3.forceLink(graphData.edges).id((d: any) => d.id).distance(100).strength(0.5))
+      .force('charge', d3.forceManyBody().strength(-600))
       .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collide', d3.forceCollide().radius((d: any) => NODE_RADIUS[d.type] + 15));
+      .force('collide', d3.forceCollide().radius((d: any) => NODE_RADIUS[d.type] + 20));
 
     simulation.on('tick', () => {
       setSimulatedNodes([...simulation.nodes() as GraphNode[]]);
@@ -103,6 +125,11 @@ export default function GraphView() {
     let details: { [key: string]: any } = {};
 
     switch (node.type) {
+        case 'compania':
+             details = {
+                'Sistemas': sistemas.filter(s => dbs.some(db => db.companiaId === node.id && servidores.find(srv => srv.id === db.servidorId)?.ambienteId && ambientes.find(a => a.id === servidores.find(srv => srv.id === db.servidorId)?.ambienteId)?.sistemaId === s.id)).length,
+             };
+            break;
         case 'sistema':
             details = {
                 'Tipo': getRelationName(node.data.tipoSistemaId, allData.tiposSistema),
@@ -204,8 +231,8 @@ export default function GraphView() {
                             stroke='hsl(var(--background))'
                             strokeWidth={2}
                         />
-                        <text textAnchor="middle" dy=".3em" fill="white" fontSize="10px" className="font-sans select-none pointer-events-none">
-                            {node.label.length > 8 ? `${node.label.slice(0, 7)}...` : node.label}
+                        <text textAnchor="middle" dy=".3em" fill="white" fontSize="11px" className="font-sans select-none pointer-events-none">
+                            {node.label}
                         </text>
                     </g>
                 </PopoverTrigger>
