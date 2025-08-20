@@ -30,7 +30,8 @@ const getRelationName = (id: string, collection: {id: string, nombre: string}[])
 
 
 export default function GraphView() {
-  const { sistemas, ambientes, servidores, databases: dbs, ...allData } = useData();
+  const allData = useData();
+  const { sistemas, ambientes, servidores, databases: dbs } = allData;
   const [graphData, setGraphData] = React.useState<GraphData>({ nodes: [], edges: [] });
   const [simulatedNodes, setSimulatedNodes] = React.useState<GraphNode[]>([]);
   const [simulatedEdges, setSimulatedEdges] = React.useState<d3.SimulationLinkDatum<GraphNode>[]>([]);
@@ -226,4 +227,3 @@ export default function GraphView() {
     </Card>
   );
 }
-
