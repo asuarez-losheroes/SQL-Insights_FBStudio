@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -5,13 +6,16 @@ import {
   Servidor, Motor, Edicion, Licencia, Ambiente, Ubicacion, GrupoSoporte,
   EstadoOperativo, Compania, SistemaOperativo, Sistema, Criticidad, TipoSistema
 } from "@/lib/relational-schema";
+import { DatabaseFormValues } from "@/lib/schema";
 import {
   mockServidores, mockMotores, mockEdiciones, mockLicencias, mockAmbientes,
   mockUbicaciones, mockGruposSoporte, mockEstadosOperativos, mockCompanias,
   mockSistemasOperativos, mockSistemas, mockCriticidades, mockTiposSistema
 } from "@/lib/mock-relational-data";
+import { mockDatabases } from "@/lib/mock-data";
 
-type RelationalData = Servidor | Motor | Edicion | Licencia | Ambiente | Ubicacion | GrupoSoporte | EstadoOperativo | Compania | SistemaOperativo | Sistema | Criticidad | TipoSistema;
+
+type RelationalData = Servidor | Motor | Edicion | Licencia | Ambiente | Ubicacion | GrupoSoporte | EstadoOperativo | Compania | SistemaOperativo | Sistema | Criticidad | TipoSistema | DatabaseFormValues;
 
 type DataContextType = {
   // Nuevas entidades
@@ -30,6 +34,7 @@ type DataContextType = {
   estadosOperativos: EstadoOperativo[];
   companias: Compania[];
   sistemasOperativos: SistemaOperativo[];
+  databases: DatabaseFormValues[];
   
   addRelationalData: (type: string, data: Omit<RelationalData, 'id'>) => void;
   updateRelationalData: (type: string, data: RelationalData) => void;
@@ -82,6 +87,7 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
   const [estadosOperativos, setEstadosOperativos] = React.useState(mockEstadosOperativos);
   const [companias, setCompanias] = React.useState(mockCompanias);
   const [sistemasOperativos, setSistemasOperativos] = React.useState(mockSistemasOperativos);
+  const [databases, setDatabases] = React.useState(mockDatabases);
   
   const setters: Record<string, React.Dispatch<React.SetStateAction<any[]>>> = {
     sistemas: setSistemas,
@@ -97,6 +103,7 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     estadosOperativos: setEstadosOperativos,
     companias: setCompanias,
     sistemasOperativos: setSistemasOperativos,
+    databases: setDatabases,
   };
 
   const prefixes: Record<string, string> = {
@@ -113,6 +120,7 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     estadosOperativos: 'est',
     companias: 'com',
     sistemasOperativos: 'so',
+    databases: 'db',
   }
 
   const addRelationalData = (type: string, data: Omit<RelationalData, 'id'>) => {
@@ -151,6 +159,7 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     estadosOperativos,
     companias,
     sistemasOperativos,
+    databases,
     addRelationalData,
     updateRelationalData,
     deleteRelationalData,
@@ -166,3 +175,4 @@ export const useData = () => {
   }
   return context;
 };
+

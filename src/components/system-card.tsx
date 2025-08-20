@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -23,9 +24,9 @@ export default function SystemCard({ sistema }: SystemCardProps) {
 
   const systemData = React.useMemo(() => {
     const systemAmbientes = ambientes.filter(a => a.sistemaId === sistema.id);
-    const systemAmbienteIds = systemAmbientes.map(a => a.id);
+    const systemAmbienteIds = systemAmbientes.map(a => a.id!);
     const systemServidores = servidores.filter(s => systemAmbienteIds.includes(s.ambienteId));
-    const systemServerIds = systemServidores.map(s => s.id);
+    const systemServerIds = systemServidores.map(s => s.id!);
     const systemDatabases = databases.filter(db => systemServerIds.includes(db.servidorId));
     
     const criticidad = criticidades.find(c => c.id === sistema.criticidadId);
