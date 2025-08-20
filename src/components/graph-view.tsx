@@ -28,9 +28,9 @@ const getRelationName = (id: string, collection: {id: string, nombre: string}[])
 // Function to calculate radius based on text length
 const calculateRadius = (label: string) => {
     // These values are experimental and can be adjusted.
-    const baseRadius = 15;
-    const charWidth = 7.5; // Approximate width of a character in pixels
-    const padding = 20;
+    const baseRadius = 10;
+    const charWidth = 6.5; 
+    const padding = 15;
     const calculatedWidth = label.length * charWidth;
     return Math.max(baseRadius, calculatedWidth / 2 + padding);
 };
@@ -75,30 +75,35 @@ export default function GraphView() {
     sistemas.forEach(s => {
         addNode({ id: s.id!, label: s.nombre, type: 'sistema', data: s });
         // Link system to a company. For simplicity, linking to the first company if not specified.
-        const companyId = dbs.find(db => {
+        const companyIdForSystem = dbs.find(db => {
             const server = servidores.find(srv => srv.id === db.servidorId);
             const ambiente = ambientes.find(a => a.id === server?.ambienteId);
             return ambiente?.sistemaId === s.id && db.companiaId;
         })?.companiaId || companias[0]?.id;
 
-        if (companyId) {
-            addEdge(companyId, s.id!);
+        if (companyIdForSystem) {
+            addEdge(companyIdForSystem, s.id!);
+        } else {
+             // If a system has no DBs, it might be orphaned. Link to first company as fallback.
+             if (companias.length > 0) {
+                 addEdge(companias[0].id!, s.id!);
+             }
         }
     });
 
     ambientes.forEach(a => {
         addNode({ id: a.id!, label: a.nombre, type: 'ambiente', data: a });
-        addEdge(a.sistemaId, a.id!);
+        if(a.sistemaId) addEdge(a.sistemaId, a.id!);
     });
 
     servidores.forEach(s => {
         addNode({ id: s.id!, label: s.nombre, type: 'servidor', data: s });
-        addEdge(s.ambienteId, s.id!);
+        if(s.ambienteId) addEdge(s.ambienteId, s.id!);
     });
 
     dbs.forEach(db => {
         addNode({ id: db.id!, label: db.nombre_bd, type: 'database', data: db });
-        addEdge(db.servidorId, db.id!);
+        if(db.servidorId) addEdge(db.servidorId, db.id!);
     });
 
 
@@ -108,6 +113,8 @@ export default function GraphView() {
         return {
             ...node,
             radius: calculateRadius(node.label),
+            x: pos?.x,
+            y: pos?.y,
             fx: pos?.x,
             fy: pos?.y,
         }
@@ -160,7 +167,7 @@ export default function GraphView() {
         d3Selection.select(zoomGroupRef.current).attr('transform', event.transform.toString());
       });
       
-    d3Selection.select(svgRef.current).call(zoom);
+    d3Selection.select(svgRef.current).call(zoom as any); // Use 'as any' to bypass strict typing issue if it arises
 
 
     simulation.on('tick', () => {
@@ -315,3 +322,4 @@ export default function GraphView() {
     </Card>
   );
 }
+
