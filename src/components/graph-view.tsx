@@ -153,20 +153,22 @@ export default function GraphView() {
     const drag = (simulation: d3.Simulation<GraphNode, undefined>) => {
         function dragstarted(event: d3.D3DragEvent<Element, GraphNode, any>, d: GraphNode) {
             if (!event.active) simulation.alphaTarget(0.3).restart();
-            if (d.x && d.y) {
+            if (d && d.x && d.y) {
               d.fx = d.x;
               d.fy = d.y;
             }
         }
         
         function dragged(event: d3.D3DragEvent<Element, GraphNode, any>, d: GraphNode) {
-            d.fx = event.x;
-            d.fy = event.y;
+            if (d) {
+              d.fx = event.x;
+              d.fy = event.y;
+            }
         }
         
         function dragended(event: d3.D3DragEvent<Element, GraphNode, any>, d: GraphNode) {
             if (!event.active) simulation.alphaTarget(0);
-            if(d.fx !== null && d.fy !== null) {
+            if(d && d.fx !== null && d.fy !== null) {
               nodePositionsRef.current.set(d.id, { x: d.fx, y: d.fy });
             }
         }
@@ -213,24 +215,33 @@ export default function GraphView() {
     switch (node.type) {
         case 'compania': {
             const companyId = node.id;
-            // Find DBs for this company
             const companyDbs = allData.databases.filter(db => db.companiaId === companyId);
             const companyDbServerIds = new Set(companyDbs.map(db => db.servidorId));
-            
-            // Find servers for these DBs
             const companyServers = allData.servidores.filter(srv => companyDbServerIds.has(srv.id!));
             const companyServerAmbienteIds = new Set(companyServers.map(srv => srv.ambienteId));
-
-            // Find ambientes for these servers
             const companyAmbientes = allData.ambientes.filter(amb => companyServerAmbienteIds.has(amb.id!));
-            const companyAmbienteSistemaIds = new Set(companyAmbientes.map(amb => amb.sistemaId));
+            const companySistemaIds = new Set(companyAmbientes.map(amb => amb.sistemaId));
             
-            // This logic now also includes systems that might not have databases yet but are part of the company structure
-            // (assuming a more direct link might exist in a real scenario).
-            // For now, we find all systems linked to the company through the environment chain.
-            const directLinkedSystems = allData.sistemas.filter(s => companyAmbienteSistemaIds.has(s.id!));
+            // This is a more robust way to count systems.
+            // It finds all systems that have at least one environment linked to the company.
+            // And also includes systems that might be directly linked in other ways (future-proofing).
+            const relatedSystems = allData.sistemas.filter(s => companySistemaIds.has(s.id!));
+            
+            // To be absolutely sure, let's also check systems that might be orphaned but belong to the company
+            // via a db record, even if ambientes/servers are missing.
+             dbs.forEach(db => {
+                if (db.companiaId === companyId) {
+                    const server = servidores.find(s => s.id === db.servidorId);
+                    if(server) {
+                        const ambiente = ambientes.find(a => a.id === server.ambienteId);
+                        if(ambiente && !companySistemaIds.has(ambiente.sistemaId)) {
+                             companySistemaIds.add(ambiente.sistemaId);
+                        }
+                    }
+                }
+            });
 
-            details = { 'Sistemas': directLinkedSystems.length };
+            details = { 'Sistemas': allData.sistemas.filter(s => companySistemaIds.has(s.id!)).length };
             break;
         }
         case 'sistema':
@@ -362,5 +373,7 @@ export default function GraphView() {
 }
 
 
+
+    
 
     
