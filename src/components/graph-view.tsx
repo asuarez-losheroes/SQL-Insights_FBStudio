@@ -28,9 +28,9 @@ const getRelationName = (id: string, collection: {id: string, nombre: string}[])
 // Function to calculate radius based on text length
 const calculateRadius = (label: string) => {
     // These values are experimental and can be adjusted.
-    const baseRadius = 10;
-    const charWidth = 7; // Approximate width of a character in pixels
-    const padding = 15;
+    const baseRadius = 15;
+    const charWidth = 7.5; // Approximate width of a character in pixels
+    const padding = 20;
     const calculatedWidth = label.length * charWidth;
     return Math.max(baseRadius, calculatedWidth / 2 + padding);
 };
@@ -46,6 +46,7 @@ export default function GraphView() {
   const svgRef = React.useRef<SVGSVGElement>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
   const zoomGroupRef = React.useRef<SVGGElement>(null);
+  const nodePositionsRef = React.useRef<Map<string, {x: number, y: number}>>(new Map());
 
 
   React.useEffect(() => {
@@ -70,35 +71,18 @@ export default function GraphView() {
     };
     
     companias.forEach(c => addNode({ id: c.id!, label: c.nombre, type: 'compania', data: c }));
-
-    const companySystemLinks: {[key: string]: Set<string>} = {};
-    dbs.forEach(db => {
-        const server = servidores.find(srv => srv.id === db.servidorId);
-        const ambiente = ambientes.find(a => a.id === server?.ambienteId);
-        const sistemaId = ambiente?.sistemaId;
-        if(db.companiaId && sistemaId) {
-            if(!companySystemLinks[db.companiaId]) {
-                companySystemLinks[db.companiaId] = new Set();
-            }
-            companySystemLinks[db.companiaId].add(sistemaId);
-        }
-    });
     
     sistemas.forEach(s => {
         addNode({ id: s.id!, label: s.nombre, type: 'sistema', data: s });
-        
-        let linked = false;
-        for (const companyId in companySystemLinks) {
-            if (companySystemLinks[companyId].has(s.id!)) {
-                addEdge(companyId, s.id!);
-                linked = true;
-            }
-        }
-        if (!linked && companias.length > 0) {
-            // Fallback: if a system has no databases linking it to a company,
-            // we could link it to the first company to avoid orphans.
-            // Or decide not to show it if it has no children. For now, let's link it.
-            addEdge(companias[0].id!, s.id!);
+        // Link system to a company. For simplicity, linking to the first company if not specified.
+        const companyId = dbs.find(db => {
+            const server = servidores.find(srv => srv.id === db.servidorId);
+            const ambiente = ambientes.find(a => a.id === server?.ambienteId);
+            return ambiente?.sistemaId === s.id && db.companiaId;
+        })?.companiaId || companias[0]?.id;
+
+        if (companyId) {
+            addEdge(companyId, s.id!);
         }
     });
 
@@ -119,10 +103,15 @@ export default function GraphView() {
 
 
     // Dynamically calculate radius for each node
-    const finalNodes = nodes.map(node => ({
-        ...node,
-        radius: calculateRadius(node.label)
-    }));
+    const finalNodes = nodes.map(node => {
+        const pos = nodePositionsRef.current.get(node.id);
+        return {
+            ...node,
+            radius: calculateRadius(node.label),
+            fx: pos?.x,
+            fy: pos?.y,
+        }
+    });
 
 
     setGraphData({ nodes: finalNodes, edges });
@@ -137,10 +126,10 @@ export default function GraphView() {
     const height = containerRef.current.clientHeight;
 
     const simulation = d3.forceSimulation(graphData.nodes as d3.SimulationNodeDatum[])
-      .force('link', d3.forceLink(graphData.edges).id((d: any) => d.id).distance(150).strength(0.8))
-      .force('charge', d3.forceManyBody().strength(-1200))
+      .force('link', d3.forceLink(graphData.edges).id((d: any) => d.id).distance(150).strength(0.5))
+      .force('charge', d3.forceManyBody().strength(-1500))
       .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collide', d3.forceCollide().radius((d: any) => d.radius + 20));
+      .force('collide', d3.forceCollide().radius((d: any) => d.radius + 30).strength(0.8));
 
     const drag = d3Drag.drag<SVGGElement, GraphNode>()
       .on('start', (event, d) => {
@@ -154,9 +143,8 @@ export default function GraphView() {
       })
       .on('end', (event, d) => {
         if (!event.active) simulation.alphaTarget(0);
-        // To persist position, uncomment below. For now, it's session-based.
-        // d.fx = null;
-        // d.fy = null;
+        // Persist node position in the ref
+        nodePositionsRef.current.set(d.id, { x: d.fx!, y: d.fy! });
       });
 
     // Apply drag to node groups
