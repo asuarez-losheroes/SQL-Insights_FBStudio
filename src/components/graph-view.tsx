@@ -26,17 +26,13 @@ const getRelationName = (id: string, collection: {id: string, nombre: string}[])
 };
 
 // Function to calculate radius based on text length
-const calculateRadius = (label: string, type: string) => {
-    const baseRadius: { [key: string]: number } = {
-        compania: 24,
-        sistema: 22,
-        ambiente: 20,
-        servidor: 18,
-        database: 16,
-    };
-    const textLength = label.length;
-    // Simple logic: bigger base radius + factor for text length
-    return baseRadius[type] + (textLength * 1.5);
+const calculateRadius = (label: string) => {
+    // These values are experimental and can be adjusted.
+    const baseRadius = 10;
+    const charWidth = 7; // Approximate width of a character in pixels
+    const padding = 15;
+    const calculatedWidth = label.length * charWidth;
+    return Math.max(baseRadius, calculatedWidth / 2 + padding);
 };
 
 
@@ -74,17 +70,35 @@ export default function GraphView() {
     };
     
     companias.forEach(c => addNode({ id: c.id!, label: c.nombre, type: 'compania', data: c }));
+
+    const companySystemLinks: {[key: string]: Set<string>} = {};
+    dbs.forEach(db => {
+        const server = servidores.find(srv => srv.id === db.servidorId);
+        const ambiente = ambientes.find(a => a.id === server?.ambienteId);
+        const sistemaId = ambiente?.sistemaId;
+        if(db.companiaId && sistemaId) {
+            if(!companySystemLinks[db.companiaId]) {
+                companySystemLinks[db.companiaId] = new Set();
+            }
+            companySystemLinks[db.companiaId].add(sistemaId);
+        }
+    });
     
     sistemas.forEach(s => {
         addNode({ id: s.id!, label: s.nombre, type: 'sistema', data: s });
-        const companyIdForSystem = dbs.find(db => {
-            const server = servidores.find(srv => srv.id === db.servidorId);
-            const ambiente = ambientes.find(a => a.id === server?.ambienteId);
-            return ambiente?.sistemaId === s.id;
-        })?.companiaId || companias[0]?.id; // Fallback to first company if no DBs
         
-        if(companyIdForSystem) {
-            addEdge(companyIdForSystem, s.id!);
+        let linked = false;
+        for (const companyId in companySystemLinks) {
+            if (companySystemLinks[companyId].has(s.id!)) {
+                addEdge(companyId, s.id!);
+                linked = true;
+            }
+        }
+        if (!linked && companias.length > 0) {
+            // Fallback: if a system has no databases linking it to a company,
+            // we could link it to the first company to avoid orphans.
+            // Or decide not to show it if it has no children. For now, let's link it.
+            addEdge(companias[0].id!, s.id!);
         }
     });
 
@@ -107,7 +121,7 @@ export default function GraphView() {
     // Dynamically calculate radius for each node
     const finalNodes = nodes.map(node => ({
         ...node,
-        radius: calculateRadius(node.label, node.type)
+        radius: calculateRadius(node.label)
     }));
 
 
@@ -228,7 +242,7 @@ export default function GraphView() {
             {Object.entries(details).map(([key, value]) => (
                 <div key={key} className="grid grid-cols-3 items-center gap-4">
                 <span className="text-sm font-medium">{key}</span>
-                <span className="col-span-2 text-sm text-muted-foreground break-all">{String(value)}</span>
+                <span className="col-span-2 text-sm text-muted-foreground break-all">{value}</span>
                 </div>
             ))}
         </div>
@@ -260,8 +274,8 @@ export default function GraphView() {
                 const dist = Math.sqrt(dx * dx + dy * dy);
                 
                 const targetRadius = (targetNode as any).radius || 20;
-                const endX = targetNode.x - (dx / dist) * (targetRadius + 2);
-                const endY = targetNode.y - (dy / dist) * (targetRadius + 2);
+                const endX = targetNode.x - (dx / dist) * (targetRadius + 5); // Increased offset
+                const endY = targetNode.y - (dy / dist) * (targetRadius + 5); // Increased offset
 
                 return (
                 <line
