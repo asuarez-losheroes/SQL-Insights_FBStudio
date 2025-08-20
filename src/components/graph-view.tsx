@@ -28,7 +28,7 @@ const getRelationName = (id: string, collection: {id: string, nombre: string}[])
 // Function to calculate radius based on text length
 const calculateRadius = (label: string) => {
     const baseRadius = 15;
-    const charWidth = 6; 
+    const charWidth = 6.5; 
     const padding = 20;
     const calculatedWidth = label.length * charWidth;
     return Math.max(baseRadius, calculatedWidth / 2 + padding);
@@ -88,7 +88,11 @@ export default function GraphView() {
                  addEdge(firstDbOfSystem.companiaId, s.id!);
             } else {
                 // If a system has no DBs, connect it to the first company as a fallback
-                addEdge(companias[0].id!, s.id!)
+                // This logic might be flawed if there are multiple companies
+                // A better approach would be to have a direct companyId in the system schema
+                // For now, let's find ANY db associated with the company and link orphan systems there
+                const companyIdForOrphan = dbs.find(db => db.companiaId)?.companiaId || companias[0].id!;
+                addEdge(companyIdForOrphan, s.id!)
             }
         }
     });
@@ -116,9 +120,7 @@ export default function GraphView() {
             ...node,
             radius: calculateRadius(node.label),
             x: pos?.x,
-            y: pos?.y,
-            fx: pos?.x,
-            fy: pos?.y,
+            y: pos?.y
         }
     });
 
@@ -144,14 +146,6 @@ export default function GraphView() {
     const drag = (simulation: d3.Simulation<GraphNode, undefined>) => {
         function dragstarted(event: d3.D3DragEvent<Element, GraphNode, any>, d: GraphNode) {
             if (!event.active) simulation.alphaTarget(0.3).restart();
-            // Safety check for x and y
-            if (d.x === undefined || d.y === undefined) {
-              const svgElement = svgRef.current;
-              if (svgElement) {
-                  d.x = parseFloat(svgElement.getAttribute('width') || '0') / 2;
-                  d.y = parseFloat(svgElement.getAttribute('height') || '0') / 2;
-              }
-            }
             d.fx = d.x;
             d.fy = d.y;
         }
@@ -209,13 +203,21 @@ export default function GraphView() {
 
     switch (node.type) {
         case 'compania': {
-            const companySystemsCount = graphData.edges.filter(edge => {
-                if (edge.source.toString() === node.id) {
-                    const targetNode = graphData.nodes.find(n => n.id === edge.target.toString());
-                    return targetNode?.type === 'sistema';
-                }
-                return false;
-            }).length;
+             // Find all DBs for this company
+            const companyDbs = allData.databases.filter(db => db.companiaId === node.id);
+            const companyDbServerIds = companyDbs.map(db => db.servidorId);
+
+            // Find all servers for these DBs
+            const companyServers = allData.servidores.filter(srv => companyDbServerIds.includes(srv.id!));
+            const companyServerAmbienteIds = companyServers.map(srv => srv.ambienteId);
+            
+            // Find all ambientes for these servers
+            const companyAmbientes = allData.ambientes.filter(amb => companyServerAmbienteIds.includes(amb.id!));
+            const companyAmbienteSistemaIds = companyAmbientes.map(amb => amb.sistemaId);
+
+            // Find unique systems
+            const companySystemsCount = new Set(companyAmbienteSistemaIds).size;
+
             details = { 'Sistemas': companySystemsCount };
             break;
         }
@@ -347,3 +349,6 @@ export default function GraphView() {
   );
 }
 
+
+
+    
