@@ -19,7 +19,7 @@ export type Database = Omit<DatabaseFormValues, 'id' | 'servidorId' | 'motorId' 
 export type GraphNode = {
   id: string;
   label: string;
-  type: 'sistema' | 'ambiente' | 'servidor' | 'database';
+  type: 'compania' | 'sistema' | 'ambiente' | 'servidor' | 'database';
   data: any;
 };
 
