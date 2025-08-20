@@ -11,12 +11,13 @@ import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
 
 const NODE_RADIUS: { [key: string]: number } = {
-  compania: 32,
-  sistema: 28,
-  ambiente: 24,
-  servidor: 20,
-  database: 16,
+  compania: 40,
+  sistema: 36,
+  ambiente: 32,
+  servidor: 28,
+  database: 24,
 };
+
 
 const NODE_COLORS: { [key: string]: string } = {
   compania: 'hsl(var(--destructive))',
@@ -45,55 +46,58 @@ export default function GraphView() {
     const edges: GraphEdge[] = [];
     const nodeIds = new Set<string>();
 
-    // 1. Start with Companies
-    companias.forEach(c => {
-        nodes.push({ id: c.id!, label: c.nombre, type: 'compania', data: c });
-        nodeIds.add(c.id!);
-    });
-
-    // 2. Link Databases to Companies and build up from there
-    dbs.forEach(db => {
-        if (nodeIds.has(db.companiaId)) {
-            // Add DB node if it doesn't exist
-            if (!nodeIds.has(db.id!)) {
-                nodes.push({ id: db.id!, label: db.nombre_bd, type: 'database', data: db });
-                nodeIds.add(db.id!);
-            }
-
-            // Add Server node if it doesn't exist
-            const server = servidores.find(s => s.id === db.servidorId);
-            if (server && !nodeIds.has(server.id!)) {
-                nodes.push({ id: server.id!, label: server.nombre, type: 'servidor', data: server });
-                nodeIds.add(server.id!);
-                edges.push({ id: `e-${server.id}-${db.id}`, source: server.id!, target: db.id! });
-            } else if (server) {
-                // Ensure edge exists even if server node was already added
-                 const edgeId = `e-${server.id}-${db.id}`;
-                 if (!edges.some(e => e.id === edgeId)) {
-                    edges.push({ id: edgeId, source: server.id!, target: db.id! });
-                 }
-            }
-            
-            // Add Ambiente node if it doesn't exist
-            const ambiente = ambientes.find(a => a.id === server?.ambienteId);
-            if (ambiente && !nodeIds.has(ambiente.id!)) {
-                nodes.push({ id: ambiente.id!, label: ambiente.nombre, type: 'ambiente', data: ambiente });
-                nodeIds.add(ambiente.id!);
-                edges.push({ id: `e-${ambiente.id}-${server!.id}`, source: ambiente.id!, target: server!.id! });
-            }
-
-            // Add Sistema node if it doesn't exist
-            const sistema = sistemas.find(s => s.id === ambiente?.sistemaId);
-            if (sistema && !nodeIds.has(sistema.id!)) {
-                 nodes.push({ id: sistema.id!, label: sistema.nombre, type: 'sistema', data: sistema });
-                 nodeIds.add(sistema.id!);
-                 edges.push({ id: `e-${sistema.id}-${ambiente!.id}`, source: sistema.id!, target: ambiente!.id! });
-                 // Link Sistema to its Company
-                 edges.push({ id: `e-${db.companiaId}-${sistema.id}`, source: db.companiaId, target: sistema.id! });
-            }
+    const addNode = (node: GraphNode) => {
+        if (!nodeIds.has(node.id)) {
+            nodes.push(node);
+            nodeIds.add(node.id);
         }
+    };
+
+    const addEdge = (sourceId: string, targetId: string) => {
+        const edgeId = `e-${sourceId}-${targetId}`;
+        if (!edges.some(e => e.id === edgeId)) {
+            edges.push({ id: edgeId, source: sourceId, target: targetId });
+        }
+    };
+    
+    // 1. Add all companies
+    companias.forEach(c => {
+        addNode({ id: c.id!, label: c.nombre, type: 'compania', data: c });
     });
     
+    // 2. Add all systems and link to companies
+    sistemas.forEach(s => {
+        addNode({ id: s.id!, label: s.nombre, type: 'sistema', data: s });
+        // Heuristic: link system to the first company that has a DB for this system
+        const companiaId = dbs.find(db => {
+            const server = servidores.find(srv => srv.id === db.servidorId);
+            const ambiente = ambientes.find(a => a.id === server?.ambienteId);
+            return ambiente?.sistemaId === s.id;
+        })?.companiaId;
+
+        if (companiaId) {
+             addEdge(companiaId, s.id!);
+        }
+    });
+
+    // 3. Add all ambientes and link to systems
+    ambientes.forEach(a => {
+        addNode({ id: a.id!, label: a.nombre, type: 'ambiente', data: a });
+        addEdge(a.sistemaId, a.id!);
+    });
+
+    // 4. Add all servers and link to ambientes
+    servidores.forEach(s => {
+        addNode({ id: s.id!, label: s.nombre, type: 'servidor', data: s });
+        addEdge(s.ambienteId, s.id!);
+    });
+
+    // 5. Add all databases and link to servers
+    dbs.forEach(db => {
+        addNode({ id: db.id!, label: db.nombre_bd, type: 'database', data: db });
+        addEdge(db.servidorId, db.id!);
+    });
+
     setGraphData({ nodes, edges });
 
   }, [companias, sistemas, ambientes, servidores, dbs]);
@@ -106,10 +110,10 @@ export default function GraphView() {
     const height = containerRef.current.clientHeight;
 
     const simulation = d3.forceSimulation(graphData.nodes as d3.SimulationNodeDatum[])
-      .force('link', d3.forceLink(graphData.edges).id((d: any) => d.id).distance(100).strength(0.5))
-      .force('charge', d3.forceManyBody().strength(-600))
+      .force('link', d3.forceLink(graphData.edges).id((d: any) => d.id).distance(120).strength(0.7))
+      .force('charge', d3.forceManyBody().strength(-800))
       .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collide', d3.forceCollide().radius((d: any) => NODE_RADIUS[d.type] + 20));
+      .force('collide', d3.forceCollide().radius((d: any) => NODE_RADIUS[d.type] + 25));
 
     simulation.on('tick', () => {
       setSimulatedNodes([...simulation.nodes() as GraphNode[]]);
@@ -125,11 +129,18 @@ export default function GraphView() {
     let details: { [key: string]: any } = {};
 
     switch (node.type) {
-        case 'compania':
-             details = {
-                'Sistemas': sistemas.filter(s => dbs.some(db => db.companiaId === node.id && servidores.find(srv => srv.id === db.servidorId)?.ambienteId && ambientes.find(a => a.id === servidores.find(srv => srv.id === db.servidorId)?.ambienteId)?.sistemaId === s.id)).length,
-             };
+        case 'compania': {
+            const companySistemas = sistemas.filter(s => {
+                return dbs.some(db => {
+                    if (db.companiaId !== node.id) return false;
+                    const server = servidores.find(srv => srv.id === db.servidorId);
+                    const ambiente = ambientes.find(a => a.id === server?.ambienteId);
+                    return ambiente?.sistemaId === s.id;
+                });
+            });
+             details = { 'Sistemas': companySistemas.length };
             break;
+        }
         case 'sistema':
             details = {
                 'Tipo': getRelationName(node.data.tipoSistemaId, allData.tiposSistema),
@@ -143,7 +154,7 @@ export default function GraphView() {
                 'URL': node.data.urlAcceso || 'N/A'
             };
             break;
-        case 'servidor':
+        case 'servidor': {
              const ambiente = allData.ambientes.find(a => a.id === node.data.ambienteId);
              const sistema = allData.sistemas.find(s => s.id === ambiente?.sistemaId);
             details = {
@@ -153,7 +164,8 @@ export default function GraphView() {
                 'Sistema': sistema?.nombre
             };
             break;
-        case 'database':
+        }
+        case 'database': {
             const servidor = allData.servidores.find(s => s.id === node.data.servidorId);
             details = {
                 'Servidor': servidor?.nombre || 'N/A',
@@ -161,6 +173,7 @@ export default function GraphView() {
                 'Crítica': <Badge variant={node.data.critico ? 'destructive' : 'secondary'}>{node.data.critico ? 'Si' : 'No'}</Badge>
             };
             break;
+        }
     }
 
 
@@ -231,7 +244,7 @@ export default function GraphView() {
                             stroke='hsl(var(--background))'
                             strokeWidth={2}
                         />
-                        <text textAnchor="middle" dy=".3em" fill="white" fontSize="11px" className="font-sans select-none pointer-events-none">
+                        <text textAnchor="middle" dy=".3em" fill="white" fontSize="12px" className="font-sans select-none pointer-events-none">
                             {node.label}
                         </text>
                     </g>
