@@ -7,16 +7,10 @@ import { useData } from '@/context/data-context';
 import { GraphData, GraphNode, GraphEdge } from '@/lib/types';
 import { Card } from './ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
-
-const NODE_RADIUS: { [key: string]: number } = {
-  compania: 40,
-  sistema: 36,
-  ambiente: 32,
-  servidor: 28,
-  database: 24,
-};
+import * as d3Selection from 'd3-selection';
+import * as d3Zoom from 'd3-zoom';
+import * as d3Drag from 'd3-drag';
 
 
 const NODE_COLORS: { [key: string]: string } = {
@@ -31,6 +25,20 @@ const getRelationName = (id: string, collection: {id: string, nombre: string}[])
   return collection.find(item => item.id === id)?.nombre || 'N/A';
 };
 
+// Function to calculate radius based on text length
+const calculateRadius = (label: string, type: string) => {
+    const baseRadius: { [key: string]: number } = {
+        compania: 24,
+        sistema: 22,
+        ambiente: 20,
+        servidor: 18,
+        database: 16,
+    };
+    const textLength = label.length;
+    // Simple logic: bigger base radius + factor for text length
+    return baseRadius[type] + (textLength * 1.5);
+};
+
 
 export default function GraphView() {
   const allData = useData();
@@ -38,8 +46,11 @@ export default function GraphView() {
   const [graphData, setGraphData] = React.useState<GraphData>({ nodes: [], edges: [] });
   const [simulatedNodes, setSimulatedNodes] = React.useState<GraphNode[]>([]);
   const [simulatedEdges, setSimulatedEdges] = React.useState<d3.SimulationLinkDatum<GraphNode>[]>([]);
+  
   const svgRef = React.useRef<SVGSVGElement>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const zoomGroupRef = React.useRef<SVGGElement>(null);
+
 
   React.useEffect(() => {
     const nodes: GraphNode[] = [];
@@ -55,65 +66,100 @@ export default function GraphView() {
 
     const addEdge = (sourceId: string, targetId: string) => {
         const edgeId = `e-${sourceId}-${targetId}`;
-        if (!edges.some(e => e.id === edgeId)) {
-            edges.push({ id: edgeId, source: sourceId, target: targetId });
+        if (nodeIds.has(sourceId) && nodeIds.has(targetId)) {
+            if (!edges.some(e => e.id === edgeId)) {
+                edges.push({ id: edgeId, source: sourceId, target: targetId });
+            }
         }
     };
     
-    // 1. Add all companies
-    companias.forEach(c => {
-        addNode({ id: c.id!, label: c.nombre, type: 'compania', data: c });
-    });
+    companias.forEach(c => addNode({ id: c.id!, label: c.nombre, type: 'compania', data: c }));
     
-    // 2. Add all systems and link to companies
     sistemas.forEach(s => {
         addNode({ id: s.id!, label: s.nombre, type: 'sistema', data: s });
-        // Heuristic: link system to the first company that has a DB for this system
-        const companiaId = dbs.find(db => {
+        const companyIdForSystem = dbs.find(db => {
             const server = servidores.find(srv => srv.id === db.servidorId);
             const ambiente = ambientes.find(a => a.id === server?.ambienteId);
             return ambiente?.sistemaId === s.id;
-        })?.companiaId;
-
-        if (companiaId) {
-             addEdge(companiaId, s.id!);
+        })?.companiaId || companias[0]?.id; // Fallback to first company if no DBs
+        
+        if(companyIdForSystem) {
+            addEdge(companyIdForSystem, s.id!);
         }
     });
 
-    // 3. Add all ambientes and link to systems
     ambientes.forEach(a => {
         addNode({ id: a.id!, label: a.nombre, type: 'ambiente', data: a });
         addEdge(a.sistemaId, a.id!);
     });
 
-    // 4. Add all servers and link to ambientes
     servidores.forEach(s => {
         addNode({ id: s.id!, label: s.nombre, type: 'servidor', data: s });
         addEdge(s.ambienteId, s.id!);
     });
 
-    // 5. Add all databases and link to servers
     dbs.forEach(db => {
         addNode({ id: db.id!, label: db.nombre_bd, type: 'database', data: db });
         addEdge(db.servidorId, db.id!);
     });
 
-    setGraphData({ nodes, edges });
+
+    // Dynamically calculate radius for each node
+    const finalNodes = nodes.map(node => ({
+        ...node,
+        radius: calculateRadius(node.label, node.type)
+    }));
+
+
+    setGraphData({ nodes: finalNodes, edges });
 
   }, [companias, sistemas, ambientes, servidores, dbs]);
 
 
   React.useEffect(() => {
-    if (!containerRef.current || graphData.nodes.length === 0) return;
+    if (!containerRef.current || !svgRef.current || graphData.nodes.length === 0) return;
 
     const width = containerRef.current.clientWidth;
     const height = containerRef.current.clientHeight;
 
     const simulation = d3.forceSimulation(graphData.nodes as d3.SimulationNodeDatum[])
-      .force('link', d3.forceLink(graphData.edges).id((d: any) => d.id).distance(120).strength(0.7))
-      .force('charge', d3.forceManyBody().strength(-800))
+      .force('link', d3.forceLink(graphData.edges).id((d: any) => d.id).distance(150).strength(0.8))
+      .force('charge', d3.forceManyBody().strength(-1200))
       .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collide', d3.forceCollide().radius((d: any) => NODE_RADIUS[d.type] + 25));
+      .force('collide', d3.forceCollide().radius((d: any) => d.radius + 20));
+
+    const drag = d3Drag.drag<SVGGElement, GraphNode>()
+      .on('start', (event, d) => {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+      })
+      .on('drag', (event, d) => {
+        d.fx = event.x;
+        d.fy = event.y;
+      })
+      .on('end', (event, d) => {
+        if (!event.active) simulation.alphaTarget(0);
+        // To persist position, uncomment below. For now, it's session-based.
+        // d.fx = null;
+        // d.fy = null;
+      });
+
+    // Apply drag to node groups
+    d3Selection.select(zoomGroupRef.current)
+      .selectAll<SVGGElement, GraphNode>('.node-group')
+      .call(drag);
+
+
+    // Setup zoom
+    const zoom = d3Zoom.zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.1, 4])
+      .on('zoom', (event) => {
+        d3Selection.select(zoomGroupRef.current).attr('transform', event.transform.toString());
+      });
+      
+    d3Selection.select(svgRef.current).call(zoom);
+
 
     simulation.on('tick', () => {
       setSimulatedNodes([...simulation.nodes() as GraphNode[]]);
@@ -202,66 +248,66 @@ export default function GraphView() {
                 <path d="M0,-5L10,0L0,5" fill="#999"></path>
             </marker>
         </defs>
+        <g ref={zoomGroupRef}>
+            <g className="links">
+            {simulatedEdges.map(edge => {
+                const sourceNode = edge.source as GraphNode;
+                const targetNode = edge.target as GraphNode;
+                if (!sourceNode.x || !sourceNode.y || !targetNode.x || !targetNode.y) return null;
 
-        <g className="links">
-          {simulatedEdges.map(edge => {
-            const sourceNode = edge.source as GraphNode;
-            const targetNode = edge.target as GraphNode;
-            if (!sourceNode.x || !targetNode.x) return null;
+                const dx = targetNode.x - sourceNode.x;
+                const dy = targetNode.y - sourceNode.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                const targetRadius = (targetNode as any).radius || 20;
+                const endX = targetNode.x - (dx / dist) * (targetRadius + 2);
+                const endY = targetNode.y - (dy / dist) * (targetRadius + 2);
 
-            // Calculate direction vector
-            const dx = targetNode.x - sourceNode.x;
-            const dy = targetNode.y - sourceNode.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            
-            // Calculate edge endpoint, considering the radius of the target node
-            const endX = targetNode.x - (dx / dist) * (NODE_RADIUS[targetNode.type] + 2);
-            const endY = targetNode.y - (dy / dist) * (NODE_RADIUS[targetNode.type] + 2);
-
-            return (
-              <line
-                key={(edge as GraphEdge).id}
-                x1={sourceNode.x}
-                y1={sourceNode.y}
-                x2={endX}
-                y2={endY}
-                stroke="hsl(var(--muted-foreground) / 0.5)"
-                strokeWidth="1.5"
-                markerEnd="url(#arrow)"
-              />
-            );
-          })}
-        </g>
-        <g className="nodes">
-          {simulatedNodes.map(node => (
-            <Popover key={node.id}>
-                <PopoverTrigger asChild>
-                    <g transform={`translate(${node.x || 0}, ${node.y || 0})`} className="cursor-pointer group">
-                        <circle
-                            r={NODE_RADIUS[node.type]}
-                            fill={NODE_COLORS[node.type]}
-                            className="transition-all duration-300 group-hover:opacity-80"
-                            stroke='hsl(var(--background))'
-                            strokeWidth={2}
-                        />
-                        <text textAnchor="middle" dy=".3em" fill="white" fontSize="12px" className="font-sans select-none pointer-events-none">
-                            {node.label}
-                        </text>
-                    </g>
-                </PopoverTrigger>
-                <PopoverContent className="w-80">
-                    <div className="grid gap-4">
-                        <div className="space-y-2">
-                            <h4 className="font-medium leading-none">{node.label}</h4>
-                            <p className="text-sm text-muted-foreground capitalize">
-                                {node.type}
-                            </p>
+                return (
+                <line
+                    key={(edge as GraphEdge).id}
+                    x1={sourceNode.x}
+                    y1={sourceNode.y}
+                    x2={endX}
+                    y2={endY}
+                    stroke="hsl(var(--muted-foreground) / 0.5)"
+                    strokeWidth="1.5"
+                    markerEnd="url(#arrow)"
+                />
+                );
+            })}
+            </g>
+            <g className="nodes">
+            {simulatedNodes.map(node => (
+                <Popover key={node.id}>
+                    <PopoverTrigger asChild>
+                        <g transform={`translate(${node.x || 0}, ${node.y || 0})`} className="cursor-pointer group node-group">
+                            <circle
+                                r={(node as any).radius}
+                                fill={NODE_COLORS[node.type]}
+                                className="transition-all duration-300 group-hover:opacity-80"
+                                stroke='hsl(var(--background))'
+                                strokeWidth={2}
+                            />
+                            <text textAnchor="middle" dy=".3em" fill="white" fontSize="12px" className="font-sans select-none pointer-events-none">
+                                {node.label}
+                            </text>
+                        </g>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80">
+                        <div className="grid gap-4">
+                            <div className="space-y-2">
+                                <h4 className="font-medium leading-none">{node.label}</h4>
+                                <p className="text-sm text-muted-foreground capitalize">
+                                    {node.type}
+                                </p>
+                            </div>
+                            <NodeDetails node={node} />
                         </div>
-                        <NodeDetails node={node} />
-                    </div>
-                </PopoverContent>
-            </Popover>
-          ))}
+                    </PopoverContent>
+                </Popover>
+            ))}
+            </g>
         </g>
       </svg>
     </Card>
