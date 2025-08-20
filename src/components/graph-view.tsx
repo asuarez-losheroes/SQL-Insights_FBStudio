@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -6,6 +7,8 @@ import { useData } from '@/context/data-context';
 import { GraphData, GraphNode, GraphEdge } from '@/lib/types';
 import { Card } from './ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { cn } from '@/lib/utils';
+import { Badge } from './ui/badge';
 
 const NODE_RADIUS: { [key: string]: number } = {
   sistema: 28,
@@ -15,60 +18,79 @@ const NODE_RADIUS: { [key: string]: number } = {
 };
 
 const NODE_COLORS: { [key: string]: string } = {
-  sistema: '#3F51B5', // Primary
-  ambiente: '#FF9800', // Accent
-  servidor: '#4CAF50', // Green
-  database: '#2196F3', // Blue
+  sistema: 'hsl(var(--primary))',
+  ambiente: 'hsl(var(--accent))',
+  servidor: 'hsl(var(--chart-2))',
+  database: 'hsl(var(--chart-1))',
 };
 
+const getRelationName = (id: string, collection: {id: string, nombre: string}[]) => {
+  return collection.find(item => item.id === id)?.nombre || 'N/A';
+};
+
+
 export default function GraphView() {
-  const { sistemas, ambientes, servidores, databases: dbs } = useData();
+  const { sistemas, ambientes, servidores, databases: dbs, ...allData } = useData();
   const [graphData, setGraphData] = React.useState<GraphData>({ nodes: [], edges: [] });
   const [simulatedNodes, setSimulatedNodes] = React.useState<GraphNode[]>([]);
+  const [simulatedEdges, setSimulatedEdges] = React.useState<d3.SimulationLinkDatum<GraphNode>[]>([]);
   const svgRef = React.useRef<SVGSVGElement>(null);
+  const containerRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     const nodes: GraphNode[] = [];
     const edges: GraphEdge[] = [];
+    const nodeIds = new Set<string>();
 
     sistemas.forEach(s => {
       nodes.push({ id: s.id!, label: s.nombre, type: 'sistema', data: s });
+      nodeIds.add(s.id!);
     });
 
     ambientes.forEach(a => {
-      nodes.push({ id: a.id!, label: a.nombre, type: 'ambiente', data: a });
-      edges.push({ id: `e-${a.sistemaId}-${a.id}`, source: a.sistemaId, target: a.id! });
+      if (nodeIds.has(a.sistemaId)) {
+        nodes.push({ id: a.id!, label: a.nombre, type: 'ambiente', data: a });
+        edges.push({ id: `e-${a.sistemaId}-${a.id}`, source: a.sistemaId, target: a.id! });
+        nodeIds.add(a.id!);
+      }
     });
 
     servidores.forEach(s => {
-      nodes.push({ id: s.id!, label: s.nombre, type: 'servidor', data: s });
-      edges.push({ id: `e-${s.ambienteId}-${s.id}`, source: s.ambienteId, target: s.id! });
+       if (nodeIds.has(s.ambienteId)) {
+        nodes.push({ id: s.id!, label: s.nombre, type: 'servidor', data: s });
+        edges.push({ id: `e-${s.ambienteId}-${s.id}`, source: s.ambienteId, target: s.id! });
+        nodeIds.add(s.id!);
+      }
     });
 
     dbs.forEach(db => {
-      nodes.push({ id: db.id!, label: db.nombre_bd, type: 'database', data: db });
-      edges.push({ id: `e-${db.servidorId}-${db.id}`, source: db.servidorId, target: db.id! });
+      if (nodeIds.has(db.servidorId)) {
+        nodes.push({ id: db.id!, label: db.nombre_bd, type: 'database', data: db });
+        edges.push({ id: `e-${db.servidorId}-${db.id}`, source: db.servidorId, target: db.id! });
+        nodeIds.add(db.id!);
+      }
     });
-
+    
     setGraphData({ nodes, edges });
 
   }, [sistemas, ambientes, servidores, dbs]);
 
 
   React.useEffect(() => {
-    if (!svgRef.current || graphData.nodes.length === 0) return;
+    if (!containerRef.current || graphData.nodes.length === 0) return;
 
-    const width = svgRef.current.parentElement!.clientWidth;
-    const height = svgRef.current.parentElement!.clientHeight;
+    const width = containerRef.current.clientWidth;
+    const height = containerRef.current.clientHeight;
 
     const simulation = d3.forceSimulation(graphData.nodes as d3.SimulationNodeDatum[])
-      .force('link', d3.forceLink(graphData.edges).id((d: any) => d.id).distance(100))
-      .force('charge', d3.forceManyBody().strength(-400))
+      .force('link', d3.forceLink(graphData.edges).id((d: any) => d.id).distance(90))
+      .force('charge', d3.forceManyBody().strength(-500))
       .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collide', d3.forceCollide().radius((d: any) => NODE_RADIUS[d.type] + 10));
+      .force('collide', d3.forceCollide().radius((d: any) => NODE_RADIUS[d.type] + 15));
 
     simulation.on('tick', () => {
       setSimulatedNodes([...simulation.nodes() as GraphNode[]]);
+      setSimulatedEdges([...simulation.force<d3.ForceLink<GraphNode, GraphEdge>>('link')!.links()]);
     });
 
     return () => {
@@ -76,33 +98,93 @@ export default function GraphView() {
     };
   }, [graphData]);
 
+  const NodeDetails = ({ node }: { node: GraphNode }) => {
+    let details: { [key: string]: any } = {};
+
+    switch (node.type) {
+        case 'sistema':
+            details = {
+                'Tipo': getRelationName(node.data.tipoSistemaId, allData.tiposSistema),
+                'Criticidad': getRelationName(node.data.criticidadId, allData.criticidades),
+                'Resp. Técnico': node.data.responsableTecnico
+            };
+            break;
+        case 'ambiente':
+            details = {
+                'Sistema': getRelationName(node.data.sistemaId, allData.sistemas),
+                'URL': node.data.urlAcceso || 'N/A'
+            };
+            break;
+        case 'servidor':
+             const ambiente = allData.ambientes.find(a => a.id === node.data.ambienteId);
+             const sistema = allData.sistemas.find(s => s.id === ambiente?.sistemaId);
+            details = {
+                'IP': node.data.ip,
+                'S.O.': getRelationName(node.data.sistemaOperativoId, allData.sistemasOperativos),
+                'Ambiente': ambiente?.nombre,
+                'Sistema': sistema?.nombre
+            };
+            break;
+        case 'database':
+            const servidor = allData.servidores.find(s => s.id === node.data.servidorId);
+            details = {
+                'Servidor': servidor?.nombre || 'N/A',
+                'Motor': getRelationName(node.data.motorId, allData.motores),
+                'Crítica': <Badge variant={node.data.critico ? 'destructive' : 'secondary'}>{node.data.critico ? 'Si' : 'No'}</Badge>
+            };
+            break;
+    }
+
+
+    return (
+       <div className="grid gap-2">
+            {Object.entries(details).map(([key, value]) => (
+                <div key={key} className="grid grid-cols-3 items-center gap-4">
+                <span className="text-sm font-medium">{key}</span>
+                <span className="col-span-2 text-sm text-muted-foreground break-all">{String(value)}</span>
+                </div>
+            ))}
+        </div>
+    )
+  }
+
 
   if (graphData.nodes.length === 0) {
     return <Card className="w-full h-full flex items-center justify-center"><p>No hay datos para mostrar en el grafo.</p></Card>
   }
   
   return (
-    <Card className="w-full h-full overflow-hidden relative">
-      <svg ref={svgRef} className="w-full h-full" viewBox={`0 0 ${svgRef.current?.parentElement?.clientWidth || 1000} ${svgRef.current?.parentElement?.clientHeight || 800}`}>
+    <Card ref={containerRef} className="w-full h-full overflow-hidden relative">
+      <svg ref={svgRef} className="w-full h-full" viewBox={`0 0 ${containerRef.current?.clientWidth || 1000} ${containerRef.current?.clientHeight || 800}`}>
         <defs>
-            <marker id="arrow" viewBox="0 -5 10 10" refX={20} refY={0} markerWidth={6} markerHeight={6} orient="auto">
+            <marker id="arrow" viewBox="0 -5 10 10" refX={10} refY={0} markerWidth={6} markerHeight={6} orient="auto-start-reverse">
                 <path d="M0,-5L10,0L0,5" fill="#999"></path>
             </marker>
         </defs>
 
         <g className="links">
-          {graphData.edges.map(edge => {
-            const sourceNode = simulatedNodes.find(n => n.id === edge.source);
-            const targetNode = simulatedNodes.find(n => n.id === edge.target);
-            if (!sourceNode || !targetNode) return null;
+          {simulatedEdges.map(edge => {
+            const sourceNode = edge.source as GraphNode;
+            const targetNode = edge.target as GraphNode;
+            if (!sourceNode.x || !targetNode.x) return null;
+
+            // Calculate direction vector
+            const dx = targetNode.x - sourceNode.x;
+            const dy = targetNode.y - sourceNode.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            // Calculate edge endpoint, considering the radius of the target node
+            const endX = targetNode.x - (dx / dist) * (NODE_RADIUS[targetNode.type] + 2);
+            const endY = targetNode.y - (dy / dist) * (NODE_RADIUS[targetNode.type] + 2);
+
             return (
               <line
-                key={edge.id}
+                key={(edge as GraphEdge).id}
                 x1={sourceNode.x}
                 y1={sourceNode.y}
-                x2={targetNode.x}
-                y2={targetNode.y}
-                stroke="#999"
+                x2={endX}
+                y2={endY}
+                stroke="hsl(var(--muted-foreground) / 0.5)"
                 strokeWidth="1.5"
                 markerEnd="url(#arrow)"
               />
@@ -113,11 +195,13 @@ export default function GraphView() {
           {simulatedNodes.map(node => (
             <Popover key={node.id}>
                 <PopoverTrigger asChild>
-                    <g transform={`translate(${node.x}, ${node.y})`} className="cursor-pointer group">
+                    <g transform={`translate(${node.x || 0}, ${node.y || 0})`} className="cursor-pointer group">
                         <circle
                             r={NODE_RADIUS[node.type]}
                             fill={NODE_COLORS[node.type]}
                             className="transition-all duration-300 group-hover:opacity-80"
+                            stroke='hsl(var(--background))'
+                            strokeWidth={2}
                         />
                         <text textAnchor="middle" dy=".3em" fill="white" fontSize="10px" className="font-sans select-none pointer-events-none">
                             {node.label.length > 8 ? `${node.label.slice(0, 7)}...` : node.label}
@@ -132,14 +216,7 @@ export default function GraphView() {
                                 {node.type}
                             </p>
                         </div>
-                        <div className="grid gap-2">
-                           {Object.entries(node.data).map(([key, value]) => (
-                             <div key={key} className="grid grid-cols-3 items-center gap-4">
-                               <span className="text-sm font-medium">{key}</span>
-                               <span className="col-span-2 text-sm text-muted-foreground break-all">{String(value)}</span>
-                             </div>
-                           ))}
-                        </div>
+                        <NodeDetails node={node} />
                     </div>
                 </PopoverContent>
             </Popover>
@@ -149,3 +226,4 @@ export default function GraphView() {
     </Card>
   );
 }
+

@@ -1,21 +1,15 @@
+
 'use client';
 
 import * as React from 'react';
 import {
-  ListFilter,
   MoreHorizontal,
   PlusCircle,
   Download,
-  Server,
-  HeartPulse,
-  ShieldAlert,
-  EyeOff,
   Sparkles,
   FileUp,
-  X,
-  Briefcase,
-  HardDrive,
-  Users
+  Search,
+  X
 } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
@@ -24,7 +18,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -34,7 +27,6 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import {
   Table,
@@ -53,13 +45,12 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 
-import { mockDatabases } from '@/lib/mock-data';
 import RecommendationModal from './recommendation-modal';
 import FileUploadDialog from './file-upload-dialog';
 import DatabaseFormDialog from './database-form-dialog';
 import { useData } from '@/context/data-context';
 import { DatabaseFormValues } from '@/lib/schema';
-import { Servidor, Sistema } from '@/lib/relational-schema';
+import { Servidor } from '@/lib/relational-schema';
 import SystemCard from './system-card';
 
 // Helper function to find relation name
@@ -73,12 +64,10 @@ const getServidorById = (id: string, servidores: Servidor[]) => {
 
 export default function DashboardClient() {
   const { 
-    sistemas, criticidades, tiposSistema, ambientes, servidores, databases: initialDatabases,
+    sistemas, criticidades, tiposSistema, ambientes, servidores, databases,
     motores, ediciones, licencias, ubicaciones, gruposSoporte, companias, estadosOperativos,
-    deleteRelationalData
+    deleteRelationalData, addRelationalData, updateRelationalData
   } = useData();
-  
-  const [databases, setDatabases] = React.useState<DatabaseFormValues[]>(initialDatabases);
   
   // Modal states
   const [selectedDb, setSelectedDb] = React.useState<DatabaseFormValues | null>(null);
@@ -86,6 +75,11 @@ export default function DashboardClient() {
   const [isRecommendationModalOpen, setRecommendationModalOpen] = React.useState(false);
   const [isFileUploadDialogOpen, setFileUploadDialogOpen] = React.useState(false);
   const [isFormDialogOpen, setFormDialogOpen] = React.useState(false);
+
+  // Filter states
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [selectedSystem, setSelectedSystem] = React.useState('all');
+  const [selectedAmbiente, setSelectedAmbiente] = React.useState('all');
 
   const handleGetRecommendations = (db: DatabaseFormValues) => {
     setSelectedDb(db);
@@ -103,26 +97,26 @@ export default function DashboardClient() {
   };
 
   const handleDelete = (id: string) => {
-    setDatabases(databases.filter(db => db.id !== id));
+    deleteRelationalData('databases', id);
   }
 
   const handleSave = (values: DatabaseFormValues) => {
     if (editingDb) {
-      setDatabases(databases.map(db => db.id === values.id ? values : db));
+      updateRelationalData('databases', values);
     } else {
-      const newDb = { ...values, id: `db-${Date.now()}` };
-      setDatabases([...databases, newDb]);
+      addRelationalData('databases', values);
     }
   };
 
   const getAmbienteInfo = (servidorId: string) => {
     const servidor = servidores.find(s => s.id === servidorId);
-    if (!servidor) return { ambienteName: 'N/A', sistemaName: 'N/A', sistemaId: null };
+    if (!servidor) return { ambienteName: 'N/A', ambienteId: null, sistemaName: 'N/A', sistemaId: null };
     const ambiente = ambientes.find(a => a.id === servidor.ambienteId);
-    if (!ambiente) return { ambienteName: 'N/A', sistemaName: 'N/A', sistemaId: null };
+    if (!ambiente) return { ambienteName: 'N/A', ambienteId: null, sistemaName: 'N/A', sistemaId: null };
     const sistema = sistemas.find(s => s.id === ambiente.sistemaId);
     return {
       ambienteName: ambiente.nombre,
+      ambienteId: ambiente.id,
       sistemaName: sistema?.nombre || 'N/A',
       sistemaId: sistema?.id || null
     };
@@ -175,6 +169,33 @@ export default function DashboardClient() {
     document.body.removeChild(a);
   };
   
+  const filteredDatabases = React.useMemo(() => {
+    let filtered = [...databases];
+
+    if (searchTerm) {
+        filtered = filtered.filter(db => db.nombre_bd.toLowerCase().includes(searchTerm.toLowerCase()));
+    }
+
+    if (selectedSystem !== 'all') {
+        filtered = filtered.filter(db => getAmbienteInfo(db.servidorId).sistemaId === selectedSystem);
+    }
+    
+    if (selectedAmbiente !== 'all') {
+        filtered = filtered.filter(db => getAmbienteInfo(db.servidorId).ambienteId === selectedAmbiente);
+    }
+
+    return filtered;
+  }, [databases, searchTerm, selectedSystem, selectedAmbiente]);
+
+
+  const availableAmbientes = React.useMemo(() => {
+      if (selectedSystem === 'all') {
+          return ambientes;
+      }
+      return ambientes.filter(a => a.sistemaId === selectedSystem);
+  }, [selectedSystem, ambientes]);
+
+
   return (
     <>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mt-6">
@@ -185,30 +206,56 @@ export default function DashboardClient() {
 
       <Card className='mt-8'>
         <CardHeader>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                  <div>
                     <CardTitle>Inventario de Bases de Datos</CardTitle>
                     <CardDescription>Vista detallada de todas las bases de datos registradas.</CardDescription>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                     <Button size="sm" variant="outline" className="h-8 gap-1" onClick={exportToCsv}>
-                    <Download className="h-3.5 w-3.5" />
-                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                        Exportar
-                    </span>
+                      <Download className="h-3.5 w-3.5" />
+                      <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Exportar</span>
                     </Button>
                     <Button size="sm" variant="outline" className="h-8 gap-1" onClick={() => setFileUploadDialogOpen(true)}>
                       <FileUp className="h-3.5 w-3.5" />
-                      <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                          Importar
-                      </span>
+                      <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Importar</span>
                     </Button>
                     <Button size="sm" className="h-8 gap-1" onClick={handleCreate}>
                       <PlusCircle className="h-3.5 w-3.5" />
-                      <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                          Crear
-                      </span>
+                      <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Crear</span>
                     </Button>
+                </div>
+            </div>
+             <div className="mt-4 flex flex-col md:flex-row md:items-center gap-4">
+                <div className="relative w-full md:w-auto md:flex-grow">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        type="search"
+                        placeholder="Buscar por nombre de BD..."
+                        className="pl-8 sm:w-full md:w-[300px] lg:w-[400px]"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                <div className="grid grid-cols-2 md:flex md:items-center gap-4">
+                    <Select value={selectedSystem} onValueChange={setSelectedSystem}>
+                        <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Filtrar por Sistema" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Todos los Sistemas</SelectItem>
+                            {sistemas.map(s => <SelectItem key={s.id} value={s.id!}>{s.nombre}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    <Select value={selectedAmbiente} onValueChange={setSelectedAmbiente}>
+                         <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Filtrar por Ambiente" />
+                        </SelectTrigger>
+                        <SelectContent>
+                             <SelectItem value="all">Todos los Ambientes</SelectItem>
+                            {availableAmbientes.map(a => <SelectItem key={a.id} value={a.id!}>{a.nombre}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
                 </div>
             </div>
         </CardHeader>
@@ -226,7 +273,7 @@ export default function DashboardClient() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {databases.map((db) => {
+              {filteredDatabases.map((db) => {
                 const { ambienteName, sistemaName } = getAmbienteInfo(db.servidorId);
                 const servidor = getServidorById(db.servidorId, servidores);
                 return (
@@ -301,3 +348,4 @@ export default function DashboardClient() {
     </>
   );
 }
+
