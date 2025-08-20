@@ -73,27 +73,34 @@ export default function GraphView() {
     
     sistemas.forEach(s => {
         addNode({ id: s.id!, label: s.nombre, type: 'sistema', data: s });
-        // Every system belongs to a company, find it via DBs or fallback
+        // Find the company this system belongs to, through DBs as a link
         const systemAmbientes = ambientes.filter(a => a.sistemaId === s.id);
         const systemServidores = servidores.filter(srv => systemAmbientes.some(a => a.id === srv.ambienteId));
         const systemDBs = dbs.filter(db => systemServidores.some(srv => srv.id === db.servidorId));
-        const companyDbLink = systemDBs.find(db => db.companiaId);
+        
+        let companyIdForSystem: string | undefined;
 
-        if (companyDbLink && companyDbLink.companiaId) {
-            addEdge(companyDbLink.companiaId, s.id!);
-        } else if (companias.length > 0) {
-            // Fallback for systems without DBs or company link in DBs
-            const firstDbOfSystem = dbs.find(db => db.servidorId && systemServidores.find(srv => srv.id === db.servidorId));
-            if (firstDbOfSystem && firstDbOfSystem.companiaId) {
-                 addEdge(firstDbOfSystem.companiaId, s.id!);
-            } else {
-                // If a system has no DBs, connect it to the first company as a fallback
-                // This logic might be flawed if there are multiple companies
-                // A better approach would be to have a direct companyId in the system schema
-                // For now, let's find ANY db associated with the company and link orphan systems there
-                const companyIdForOrphan = dbs.find(db => db.companiaId)?.companiaId || companias[0].id!;
-                addEdge(companyIdForOrphan, s.id!)
+        if (systemDBs.length > 0) {
+            // Find a DB that has a company link
+            const dbWithCompany = systemDBs.find(db => db.companiaId);
+            if (dbWithCompany) {
+                companyIdForSystem = dbWithCompany.companiaId;
             }
+        }
+        
+        // If no DB link, we could have a different way to link systems to companies
+        // For now, if a company exists, we'll link orphan systems to the first one as a fallback.
+        if (!companyIdForSystem && companias.length > 0) {
+           const anyDbWithCompany = dbs.find(db => db.companiaId);
+           if(anyDbWithCompany) {
+               companyIdForSystem = anyDbWithCompany.companiaId;
+           } else {
+               companyIdForSystem = companias[0].id;
+           }
+        }
+
+        if (companyIdForSystem) {
+             addEdge(companyIdForSystem, s.id!);
         }
     });
 
@@ -146,8 +153,10 @@ export default function GraphView() {
     const drag = (simulation: d3.Simulation<GraphNode, undefined>) => {
         function dragstarted(event: d3.D3DragEvent<Element, GraphNode, any>, d: GraphNode) {
             if (!event.active) simulation.alphaTarget(0.3).restart();
-            d.fx = d.x;
-            d.fy = d.y;
+            if (d.x && d.y) {
+              d.fx = d.x;
+              d.fy = d.y;
+            }
         }
         
         function dragged(event: d3.D3DragEvent<Element, GraphNode, any>, d: GraphNode) {
@@ -184,7 +193,7 @@ export default function GraphView() {
     // Apply drag to node groups after they are rendered
     setTimeout(() => {
         const nodeSelection = g.selectAll<SVGGElement, GraphNode>('.node-group');
-        nodeSelection.call(drag(simulation as any));
+        nodeSelection.call(drag(simulation as any) as any);
     }, 0);
 
 
@@ -203,22 +212,25 @@ export default function GraphView() {
 
     switch (node.type) {
         case 'compania': {
-             // Find all DBs for this company
-            const companyDbs = allData.databases.filter(db => db.companiaId === node.id);
-            const companyDbServerIds = companyDbs.map(db => db.servidorId);
-
-            // Find all servers for these DBs
-            const companyServers = allData.servidores.filter(srv => companyDbServerIds.includes(srv.id!));
-            const companyServerAmbienteIds = companyServers.map(srv => srv.ambienteId);
+            const companyId = node.id;
+            // Find DBs for this company
+            const companyDbs = allData.databases.filter(db => db.companiaId === companyId);
+            const companyDbServerIds = new Set(companyDbs.map(db => db.servidorId));
             
-            // Find all ambientes for these servers
-            const companyAmbientes = allData.ambientes.filter(amb => companyServerAmbienteIds.includes(amb.id!));
-            const companyAmbienteSistemaIds = companyAmbientes.map(amb => amb.sistemaId);
+            // Find servers for these DBs
+            const companyServers = allData.servidores.filter(srv => companyDbServerIds.has(srv.id!));
+            const companyServerAmbienteIds = new Set(companyServers.map(srv => srv.ambienteId));
 
-            // Find unique systems
-            const companySystemsCount = new Set(companyAmbienteSistemaIds).size;
+            // Find ambientes for these servers
+            const companyAmbientes = allData.ambientes.filter(amb => companyServerAmbienteIds.has(amb.id!));
+            const companyAmbienteSistemaIds = new Set(companyAmbientes.map(amb => amb.sistemaId));
+            
+            // This logic now also includes systems that might not have databases yet but are part of the company structure
+            // (assuming a more direct link might exist in a real scenario).
+            // For now, we find all systems linked to the company through the environment chain.
+            const directLinkedSystems = allData.sistemas.filter(s => companyAmbienteSistemaIds.has(s.id!));
 
-            details = { 'Sistemas': companySystemsCount };
+            details = { 'Sistemas': directLinkedSystems.length };
             break;
         }
         case 'sistema':
