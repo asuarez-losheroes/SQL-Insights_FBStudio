@@ -27,9 +27,9 @@ const getRelationName = (id: string, collection: {id: string, nombre: string}[])
 
 // Function to calculate radius based on text length
 const calculateRadius = (label: string) => {
-    const baseRadius = 10;
-    const charWidth = 6.5; 
-    const padding = 15;
+    const baseRadius = 15;
+    const charWidth = 6; 
+    const padding = 20;
     const calculatedWidth = label.length * charWidth;
     return Math.max(baseRadius, calculatedWidth / 2 + padding);
 };
@@ -71,31 +71,26 @@ export default function GraphView() {
     
     companias.forEach(c => addNode({ id: c.id!, label: c.nombre, type: 'compania', data: c }));
     
-    // Build a map of what systems belong to which company through the data chain
-    const systemToCompanyMap = new Map<string, string>();
     sistemas.forEach(s => {
+        addNode({ id: s.id!, label: s.nombre, type: 'sistema', data: s });
+        // Every system belongs to a company, find it via DBs or fallback
         const systemAmbientes = ambientes.filter(a => a.sistemaId === s.id);
         const systemServidores = servidores.filter(srv => systemAmbientes.some(a => a.id === srv.ambienteId));
         const systemDBs = dbs.filter(db => systemServidores.some(srv => srv.id === db.servidorId));
-        
-        // Find a DB that links this system to a company
-        const linkingDb = systemDBs.find(db => db.companiaId);
-        if (linkingDb && linkingDb.companiaId) {
-            systemToCompanyMap.set(s.id!, linkingDb.companiaId);
+        const companyDbLink = systemDBs.find(db => db.companiaId);
+
+        if (companyDbLink && companyDbLink.companiaId) {
+            addEdge(companyDbLink.companiaId, s.id!);
+        } else if (companias.length > 0) {
+            // Fallback for systems without DBs or company link in DBs
+            const firstDbOfSystem = dbs.find(db => db.servidorId && systemServidores.find(srv => srv.id === db.servidorId));
+            if (firstDbOfSystem && firstDbOfSystem.companiaId) {
+                 addEdge(firstDbOfSystem.companiaId, s.id!);
+            } else {
+                // If a system has no DBs, connect it to the first company as a fallback
+                addEdge(companias[0].id!, s.id!)
+            }
         }
-    });
-
-
-    sistemas.forEach(s => {
-      addNode({ id: s.id!, label: s.nombre, type: 'sistema', data: s });
-      const companyId = systemToCompanyMap.get(s.id!);
-      if (companyId) {
-           addEdge(companyId, s.id!);
-      } else if (companias.length > 0) {
-           // Fallback for systems not linked via DBs, connect to the first company.
-           // This helps render all systems even if they don't have DBs yet.
-           addEdge(companias[0].id!, s.id!)
-      }
     });
 
     ambientes.forEach(a => {
@@ -149,6 +144,14 @@ export default function GraphView() {
     const drag = (simulation: d3.Simulation<GraphNode, undefined>) => {
         function dragstarted(event: d3.D3DragEvent<Element, GraphNode, any>, d: GraphNode) {
             if (!event.active) simulation.alphaTarget(0.3).restart();
+            // Safety check for x and y
+            if (d.x === undefined || d.y === undefined) {
+              const svgElement = svgRef.current;
+              if (svgElement) {
+                  d.x = parseFloat(svgElement.getAttribute('width') || '0') / 2;
+                  d.y = parseFloat(svgElement.getAttribute('height') || '0') / 2;
+              }
+            }
             d.fx = d.x;
             d.fy = d.y;
         }
@@ -160,7 +163,9 @@ export default function GraphView() {
         
         function dragended(event: d3.D3DragEvent<Element, GraphNode, any>, d: GraphNode) {
             if (!event.active) simulation.alphaTarget(0);
-            nodePositionsRef.current.set(d.id, { x: d.fx!, y: d.fy! });
+            if(d.fx !== null && d.fy !== null) {
+              nodePositionsRef.current.set(d.id, { x: d.fx, y: d.fy });
+            }
         }
         
         return d3Drag.drag<SVGGElement, GraphNode>()
@@ -204,15 +209,21 @@ export default function GraphView() {
 
     switch (node.type) {
         case 'compania': {
-            // Correctly count all systems linked to this company in the graph.
-            const companySystemsCount = graphData.edges.filter(edge => edge.source === node.id && graphData.nodes.find(n => n.id === edge.target)?.type === 'sistema').length;
+            const companySystemsCount = graphData.edges.filter(edge => {
+                if (edge.source.toString() === node.id) {
+                    const targetNode = graphData.nodes.find(n => n.id === edge.target.toString());
+                    return targetNode?.type === 'sistema';
+                }
+                return false;
+            }).length;
             details = { 'Sistemas': companySystemsCount };
             break;
         }
         case 'sistema':
+            const criticidad = allData.criticidades.find(c => c.id === node.data.criticidadId);
             details = {
                 'Tipo': getRelationName(node.data.tipoSistemaId, allData.tiposSistema),
-                'Criticidad': <Badge variant={node.data.criticidadId === 'crit-001' ? 'destructive' : 'secondary'}>{getRelationName(node.data.criticidadId, allData.criticidades)}</Badge>,
+                'Criticidad': <Badge variant={criticidad?.nombre === 'Alta' ? 'destructive' : 'secondary'}>{criticidad?.nombre || 'N/A'}</Badge>,
                 'Resp. Técnico': node.data.responsableTecnico
             };
             break;
@@ -335,3 +346,4 @@ export default function GraphView() {
     </Card>
   );
 }
+
