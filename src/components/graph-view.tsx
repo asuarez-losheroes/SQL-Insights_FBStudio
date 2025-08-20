@@ -29,7 +29,7 @@ const getRelationName = (id: string, collection: {id: string, nombre: string}[])
 const calculateRadius = (label: string) => {
     // These values are experimental and can be adjusted.
     const baseRadius = 15;
-    const charWidth = 7; 
+    const charWidth = 7.5; 
     const padding = 20;
     const calculatedWidth = label.length * charWidth;
     return Math.max(baseRadius, calculatedWidth / 2 + padding);
@@ -72,26 +72,22 @@ export default function GraphView() {
     
     companias.forEach(c => addNode({ id: c.id!, label: c.nombre, type: 'compania', data: c }));
 
-    const dbSystems = new Set(dbs.map(db => {
-        const server = servidores.find(srv => srv.id === db.servidorId);
-        const ambiente = ambientes.find(a => a.id === server?.ambienteId);
-        return ambiente?.sistemaId;
-    }).filter(Boolean));
-
-    const systemHasDbs = (systemId: string) => dbSystems.has(systemId);
-    
     sistemas.forEach(s => {
-        addNode({ id: s.id!, label: s.nombre, type: 'sistema', data: s });
-        const companyIdForSystem = companias.find(c => dbs.some(db => {
-            if (db.companiaId !== c.id) return false;
-            const server = servidores.find(srv => srv.id === db.servidorId);
-            const ambiente = ambientes.find(a => a.id === server?.ambienteId);
-            return ambiente?.sistemaId === s.id;
-        }))?.id || companias[0]?.id;
-
-        if (companyIdForSystem) {
-             addEdge(companyIdForSystem, s.id!);
-        }
+      addNode({ id: s.id!, label: s.nombre, type: 'sistema', data: s });
+      // Heurística para encontrar la compañía a la que pertenece el sistema
+      const companyIdForSystem = companias.find(c => dbs.some(db => {
+          if (db.companiaId !== c.id) return false;
+          const server = servidores.find(srv => srv.id === db.servidorId);
+          const ambiente = ambientes.find(a => a.id === server?.ambienteId);
+          return ambiente?.sistemaId === s.id;
+      }))?.id;
+      
+      // Si no se encuentra una compañía a través de las BBDD, se conecta a la primera
+      if (companyIdForSystem) {
+           addEdge(companyIdForSystem, s.id!);
+      } else if (companias.length > 0) {
+           addEdge(companias[0].id!, s.id!)
+      }
     });
 
     ambientes.forEach(a => {
@@ -142,22 +138,29 @@ export default function GraphView() {
       .force('collide', d3.forceCollide().radius((d: any) => d.radius + 30).strength(0.8));
 
     
-    const drag = d3Drag.drag<SVGGElement, GraphNode>()
-      .on('start', (event, d) => {
-        if (!event.active) simulation.alphaTarget(0.3).restart();
-        d.fx = d.x;
-        d.fy = d.y;
-        event.sourceEvent.stopPropagation(); // Stop propagation to prevent zoom/pan
-      })
-      .on('drag', (event, d) => {
-        d.fx = event.x;
-        d.fy = event.y;
-      })
-      .on('end', (event, d) => {
-        if (!event.active) simulation.alphaTarget(0);
-        // Persist node position in the ref
-        nodePositionsRef.current.set(d.id, { x: d.fx!, y: d.fy! });
-      });
+    const drag = (simulation: d3.Simulation<GraphNode, undefined>) => {
+        const dragstarted = (event: d3.D3DragEvent<SVGGElement, GraphNode, any>, d: GraphNode) => {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+            event.sourceEvent.stopPropagation();
+        }
+        
+        const dragged = (event: d3.D3DragEvent<SVGGElement, GraphNode, any>, d: GraphNode) => {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+        
+        const dragended = (event: d3.D3DragEvent<SVGGElement, GraphNode, any>, d: GraphNode) => {
+            if (!event.active) simulation.alphaTarget(0);
+            nodePositionsRef.current.set(d.id, { x: d.fx!, y: d.fy! });
+        }
+        
+        return d3Drag.drag<SVGGElement, GraphNode>()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended);
+    }
 
     
     const svgElement = d3Selection.select(svgRef.current);
@@ -170,13 +173,12 @@ export default function GraphView() {
         g.attr('transform', event.transform.toString());
       });
       
-    svgElement.call(zoom as any);
+    svgElement.call(zoom as any).on("dblclick.zoom", null);
 
     // Apply drag to node groups after they are rendered
-    // Ensure nodes are rendered before applying drag
-     setTimeout(() => {
+    setTimeout(() => {
         const nodeSelection = g.selectAll<SVGGElement, GraphNode>('.node-group');
-        nodeSelection.call(drag);
+        nodeSelection.call(drag(simulation as any));
     }, 0);
 
 
@@ -332,5 +334,6 @@ export default function GraphView() {
     </Card>
   );
 }
+
 
 
