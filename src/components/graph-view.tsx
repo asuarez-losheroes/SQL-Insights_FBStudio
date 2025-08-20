@@ -47,26 +47,36 @@ const GraphView = () => {
          switch (node.type) {
             case 'compania':
                  const companySystems = sistemas.filter(s => {
-                    // Direct connection from company to system should be established differently.
-                    // This logic seems overly complex and might be the source of the count error.
-                    // Let's simplify the logic based on the data model.
-                    // A system is linked to an environment, a server to an environment, a db to a server. A db has a company.
-                    // To link a company to a system, we must traverse the graph.
-                    // A simpler way: A company has many DBs. Each DB belongs to a server, which belongs to an environment, which belongs to a system.
-                    
-                    const systemAmbienteIds = ambientes.filter(a => a.sistemaId === s.id).map(a => a.id);
-                    const systemServerIds = servidores.filter(srv => systemAmbienteIds.includes(srv.ambienteId)).map(s => s.id);
-                    const systemDBs = dbs.filter(db => systemServerIds.includes(db.servidorId));
+                    const systemAmbientes = ambientes.filter(a => a.sistemaId === s.id).map(a => a.id);
+                    if (systemAmbientes.length === 0) {
+                        // For systems like "CRM Interno" which has no ambientes.
+                        // We need a better way to link company to system.
+                        // A system should probably have a companyId.
+                        // As a workaround, we will check if any DB in the company links to this system.
+                        // This is complex. Let's assume a direct link for now if no dbs.
+                        // For "CRM Interno", it's in "Caja los Heroes"
+                        if (s.nombre === 'CRM Interno' && node.data.nombre === 'Caja Los Héroes') return true;
+                        return false;
+                    }
+                    const systemServidores = servidores.filter(srv => systemAmbientes.includes(srv.ambienteId)).map(srv => srv.id);
+                    const systemDBs = dbs.filter(db => systemServidores.includes(db.servidorId));
                     return systemDBs.some(db => db.companiaId === node.id);
-                });
-                const companySystemsDirect = sistemas.filter(s => {
-                    const ambientesDoSistema = ambientes.filter(a => a.sistemaId === s.id).map(a => a.id);
-                    const servidoresDosAmbientes = servidores.filter(srv => ambientesDoSistema.includes(srv.ambienteId)).map(srv => srv.id);
-                    return dbs.some(db => servidoresDosAmbientes.includes(db.servidorId) && db.companiaId === node.id);
-                });
+                 });
+                 const companySystemsCount = new Set(
+                    dbs.filter(db => db.companiaId === node.id)
+                        .map(db => {
+                            const server = servidores.find(s => s.id === db.servidorId);
+                            const ambiente = ambientes.find(a => a.id === server?.ambienteId);
+                            return ambiente?.sistemaId;
+                        })
+                        .filter(Boolean)
+                 ).size;
 
-                 details = { 'Sistemas': companySystemsDirect.length };
+                 const crm = sistemas.find(s => s.nombre === "CRM Interno");
+                 const crmIsForThisCompany = crm && node.nombre === "Caja Los Héroes";
+                 const totalSystems = companySystemsCount + (crmIsForThisCompany ? 1: 0)
 
+                 details = { 'Sistemas': totalSystems };
                 break;
              case 'sistema':
                 const criticidad = criticidades.find(c => c.id === node.data.criticidadId);
@@ -80,7 +90,7 @@ const GraphView = () => {
                 break;
         }
         return details;
-    }, [sistemas, dbs, servidores, ambientes, criticidades, tiposSistema, sistemasOperativos, motores]);
+    }, [sistemas, dbs, servidores, ambientes, criticidades, tiposSistema, sistemasOperativos, motores, companias]);
 
 
     React.useEffect(() => {
@@ -116,33 +126,22 @@ const GraphView = () => {
             }
         };
 
-        sistemas.forEach(s => {
-            // Find which company this system belongs to
-            const systemAmbientes = ambientes.filter(a => a.sistemaId === s.id).map(a => a.id);
-            const systemServidores = servidores.filter(srv => systemAmbientes.includes(srv.ambienteId)).map(srv => srv.id);
-            const systemDBs = dbs.filter(db => systemServidores.includes(db.servidorId));
-            const companyIds = new Set(systemDBs.map(db => db.companiaId).filter(id => id));
-            
-            if (companyIds.size > 0) {
-                 companyIds.forEach(companyId => addEdge(companyId, s.id!));
-            } else {
-                 // It's possible a system has no dbs yet. How to link it?
-                 // Let's find a company that has other systems that share ambientes, etc.
-                 // For now, let's check if the system belongs to ANY company through other systems
-                 const anyCompany = companias[0]; // Fallback, not ideal
-                 if (anyCompany?.id) {
-                     // This logic is flawed. A system should belong to a company implicitly.
-                     // The problem is that "CRM Interno" belongs to "Caja los Heroes" but has no dbs.
-                     // The data model does not have a direct companyId in the system.
-                     // Let's assume a system belongs to a company if it's the main one.
-                 }
-            }
-             // Connect CRM to Caja Los Heroes as a workaround for the data model
-            if (s.nombre === 'CRM Interno') {
-                const caja = companias.find(c => c.nombre === 'Caja Los Héroes');
-                if (caja?.id) addEdge(caja.id, s.id!);
+        // Connect DBs to their company's system
+        dbs.forEach(db => {
+            const server = servidores.find(s => s.id === db.servidorId);
+            const ambiente = ambientes.find(a => a.id === server?.ambienteId);
+            if (ambiente?.sistemaId && db.companiaId) {
+                // This creates a link between company and system through the DB
+                addEdge(db.companiaId, ambiente.sistemaId);
             }
         });
+        
+        // Explicitly connect "CRM Interno" to "Caja Los Héroes"
+        const crmSystem = sistemas.find(s => s.nombre === "CRM Interno");
+        const cajaCompany = companias.find(c => c.nombre === "Caja Los Héroes");
+        if (crmSystem?.id && cajaCompany?.id) {
+            addEdge(cajaCompany.id, crmSystem.id);
+        }
 
         dbs.forEach(db => {
             if(db.servidorId) addEdge(db.servidorId, db.id!);
@@ -174,7 +173,9 @@ const GraphView = () => {
             .style("border-width", "1px")
             .style("border-radius", "5px")
             .style("padding", "10px")
-            .style("pointer-events", "none");
+            .style("pointer-events", "none")
+            .style("color", "black")
+            .style("z-index", "100");
 
 
         const simulation = d3Force.forceSimulation(allNodes as d3.SimulationNodeDatum[])
@@ -242,8 +243,8 @@ const GraphView = () => {
                 let line: string[] = [];
                 let lineNumber = 0;
                 const lineHeight = 1.1; 
-                const y = text.attr("y");
-                const dy = parseFloat(text.attr("dy"));
+                const y = text.attr("y") || 0;
+                const dy = parseFloat(text.attr("dy") || "0");
                 let tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
 
                 while (word = words.pop()) {
@@ -271,7 +272,7 @@ const GraphView = () => {
         function drag(simulation: d3Force.Simulation<d3.SimulationNodeDatum, undefined>) {
             function dragstarted(event: d3.D3DragEvent<Element, CustomGraphNode, any>, d: CustomGraphNode) {
                 if (!event.active) simulation.alphaTarget(0.3).restart();
-                 if (d) {
+                 if (d && d.x && d.y) {
                     d.fx = d.x;
                     d.fy = d.y;
                 }
@@ -299,6 +300,7 @@ const GraphView = () => {
                 backgroundColor: '#ffffff',
                 width: 1200,
                 height: 900,
+                skipFonts: true
             }).then((dataUrl) => {
                 const a = document.createElement('a');
                 a.setAttribute('download', 'graph.png');
@@ -352,3 +354,5 @@ const GraphViewWrapper = () => (
 );
 
 export default GraphViewWrapper;
+
+    
