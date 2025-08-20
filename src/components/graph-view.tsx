@@ -11,6 +11,8 @@ import { Badge } from './ui/badge';
 import * as d3Selection from 'd3-selection';
 import * as d3Zoom from 'd3-zoom';
 import * as d3Drag from 'd3-drag';
+import { Button } from './ui/button';
+import { Plus, Minus, LocateFixed } from 'lucide-react';
 
 
 const NODE_COLORS: { [key: string]: string } = {
@@ -25,11 +27,10 @@ const getRelationName = (id: string, collection: {id: string, nombre: string}[])
   return collection.find(item => item.id === id)?.nombre || 'N/A';
 };
 
-// Function to calculate radius based on text length
 const calculateRadius = (label: string) => {
-    const baseRadius = 15;
-    const charWidth = 6.5; 
-    const padding = 20;
+    const baseRadius = 20;
+    const charWidth = 7; 
+    const padding = 15;
     const calculatedWidth = label.length * charWidth;
     return Math.max(baseRadius, calculatedWidth / 2 + padding);
 };
@@ -73,7 +74,6 @@ export default function GraphView() {
     
     sistemas.forEach(s => {
         addNode({ id: s.id!, label: s.nombre, type: 'sistema', data: s });
-        // Find the company this system belongs to, through DBs as a link
         const systemAmbientes = ambientes.filter(a => a.sistemaId === s.id);
         const systemServidores = servidores.filter(srv => systemAmbientes.some(a => a.id === srv.ambienteId));
         const systemDBs = dbs.filter(db => systemServidores.some(srv => srv.id === db.servidorId));
@@ -81,26 +81,32 @@ export default function GraphView() {
         let companyIdForSystem: string | undefined;
 
         if (systemDBs.length > 0) {
-            // Find a DB that has a company link
             const dbWithCompany = systemDBs.find(db => db.companiaId);
             if (dbWithCompany) {
                 companyIdForSystem = dbWithCompany.companiaId;
             }
         }
         
-        // If no DB link, we could have a different way to link systems to companies
-        // For now, if a company exists, we'll link orphan systems to the first one as a fallback.
         if (!companyIdForSystem && companias.length > 0) {
-           const anyDbWithCompany = dbs.find(db => db.companiaId);
-           if(anyDbWithCompany) {
-               companyIdForSystem = anyDbWithCompany.companiaId;
-           } else {
-               companyIdForSystem = companias[0].id;
-           }
+            const anyDbWithCompany = dbs.find(db => db.companiaId);
+            if(anyDbWithCompany && anyDbWithCompany.companiaId) {
+                const server = servidores.find(s => s.id === anyDbWithCompany.servidorId);
+                const ambiente = ambientes.find(a => a.id === server?.ambienteId);
+                if (ambiente?.sistemaId === s.id) {
+                    companyIdForSystem = anyDbWithCompany.companiaId;
+                }
+            } else {
+                 if (companias.length > 0) {
+                    // Fallback: Asignar al primero si no hay otra lógica
+                    companyIdForSystem = companias[0].id;
+                }
+            }
         }
 
         if (companyIdForSystem) {
              addEdge(companyIdForSystem, s.id!);
+        } else if(companias.length > 0) {
+            addEdge(companias[0].id!, s.id!)
         }
     });
 
@@ -120,7 +126,6 @@ export default function GraphView() {
     });
 
 
-    // Dynamically calculate radius for each node
     const finalNodes = nodes.map(node => {
         const pos = nodePositionsRef.current.get(node.id);
         return {
@@ -145,9 +150,9 @@ export default function GraphView() {
 
     const simulation = d3.forceSimulation(graphData.nodes as d3.SimulationNodeDatum[])
       .force('link', d3.forceLink(graphData.edges).id((d: any) => d.id).distance(150).strength(0.5))
-      .force('charge', d3.forceManyBody().strength(-1500))
+      .force('charge', d3.forceManyBody().strength(-2000))
       .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collide', d3.forceCollide().radius((d: any) => d.radius + 30).strength(0.8));
+      .force('collide', d3.forceCollide().radius((d: any) => d.radius + 40).strength(0.9));
 
     
     const drag = (simulation: d3.Simulation<GraphNode, undefined>) => {
@@ -183,7 +188,6 @@ export default function GraphView() {
     const svgElement = d3Selection.select(svgRef.current);
     const g = d3Selection.select(zoomGroupRef.current);
 
-    // Setup zoom
     const zoom = d3Zoom.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.1, 4])
       .on('zoom', (event) => {
@@ -191,12 +195,9 @@ export default function GraphView() {
       });
       
     svgElement.call(zoom as any).on("dblclick.zoom", null);
-
-    // Apply drag to node groups after they are rendered
-    setTimeout(() => {
-        const nodeSelection = g.selectAll<SVGGElement, GraphNode>('.node-group');
-        nodeSelection.call(drag(simulation as any) as any);
-    }, 0);
+    
+    const nodeSelection = g.selectAll<SVGGElement, GraphNode>('.node-group');
+    nodeSelection.call(drag(simulation as any) as any);
 
 
     simulation.on('tick', () => {
@@ -209,46 +210,76 @@ export default function GraphView() {
     };
   }, [graphData]);
 
+  const handleZoomIn = () => {
+    const svgElement = d3Selection.select(svgRef.current);
+    const zoomBehavior = d3Zoom.zoom<SVGSVGElement, unknown>().scaleBy;
+    svgElement.transition().duration(250).call(zoomBehavior, 1.2);
+  };
+  
+  const handleZoomOut = () => {
+    const svgElement = d3Selection.select(svgRef.current);
+    const zoomBehavior = d3Zoom.zoom<SVGSVGElement, unknown>().scaleBy;
+    svgElement.transition().duration(250).call(zoomBehavior, 0.8);
+  };
+  
+  const handleResetZoom = () => {
+      if (!containerRef.current) return;
+      const width = containerRef.current.clientWidth;
+      const height = containerRef.current.clientHeight;
+
+      const svgElement = d3Selection.select(svgRef.current);
+      const zoomBehavior = d3Zoom.zoom<SVGSVGElement, unknown>().transform;
+      svgElement.transition().duration(500).call(zoomBehavior, d3Zoom.zoomIdentity.translate(0, 0).scale(1));
+
+      // Re-center simulation
+      const simulation = (svgElement.node() as any).__d3Simulation;
+      if (simulation) {
+        simulation.force('center', d3.forceCenter(width / 2, height / 2)).alpha(0.3).restart();
+      }
+  };
+
+
   const NodeDetails = ({ node }: { node: GraphNode }) => {
     let details: { [key: string]: any } = {};
 
     switch (node.type) {
         case 'compania': {
             const companyId = node.id;
-            const companyDbs = allData.databases.filter(db => db.companiaId === companyId);
-            const companyDbServerIds = new Set(companyDbs.map(db => db.servidorId));
-            const companyServers = allData.servidores.filter(srv => companyDbServerIds.has(srv.id!));
-            const companyServerAmbienteIds = new Set(companyServers.map(srv => srv.ambienteId));
-            const companyAmbientes = allData.ambientes.filter(amb => companyServerAmbienteIds.has(amb.id!));
-            const companySistemaIds = new Set(companyAmbientes.map(amb => amb.sistemaId));
             
-            // This is a more robust way to count systems.
-            // It finds all systems that have at least one environment linked to the company.
-            // And also includes systems that might be directly linked in other ways (future-proofing).
-            const relatedSystems = allData.sistemas.filter(s => companySistemaIds.has(s.id!));
+            const linkedSystems = new Set<string>();
             
-            // To be absolutely sure, let's also check systems that might be orphaned but belong to the company
-            // via a db record, even if ambientes/servers are missing.
-             dbs.forEach(db => {
-                if (db.companiaId === companyId) {
-                    const server = servidores.find(s => s.id === db.servidorId);
-                    if(server) {
-                        const ambiente = ambientes.find(a => a.id === server.ambienteId);
-                        if(ambiente && !companySistemaIds.has(ambiente.sistemaId)) {
-                             companySistemaIds.add(ambiente.sistemaId);
-                        }
+            ambientes.forEach(ambiente => {
+                const sistema = sistemas.find(s => s.id === ambiente.sistemaId);
+                if (sistema) {
+                    const hasDbInCompany = dbs.some(db => 
+                        db.companiaId === companyId && 
+                        servidores.some(srv => 
+                            srv.ambienteId === ambiente.id && 
+                            db.servidorId === srv.id
+                        )
+                    );
+                    
+                    if (hasDbInCompany) {
+                        linkedSystems.add(sistema.id!);
                     }
                 }
             });
 
-            details = { 'Sistemas': allData.sistemas.filter(s => companySistemaIds.has(s.id!)).length };
+            const orphanSystems = sistemas.filter(s => 
+                !ambientes.some(a => a.sistemaId === s.id) && 
+                companias.length > 0 && companias[0].id === companyId
+            );
+
+            orphanSystems.forEach(s => linkedSystems.add(s.id!));
+            
+            details = { 'Sistemas': linkedSystems.size };
             break;
         }
         case 'sistema':
             const criticidad = allData.criticidades.find(c => c.id === node.data.criticidadId);
             details = {
                 'Tipo': getRelationName(node.data.tipoSistemaId, allData.tiposSistema),
-                'Criticidad': <Badge variant={criticidad?.nombre === 'Alta' ? 'destructive' : 'secondary'}>{criticidad?.nombre || 'N/A'}</Badge>,
+                'Criticidad': criticidad ? <Badge variant={criticidad.nombre === 'Alta' ? 'destructive' : 'secondary'}>{criticidad.nombre}</Badge> : 'N/A',
                 'Resp. Técnico': node.data.responsableTecnico
             };
             break;
@@ -368,12 +399,17 @@ export default function GraphView() {
             </g>
         </g>
       </svg>
+      <div className="absolute bottom-4 right-4 flex flex-col gap-2">
+        <Button size="icon" onClick={handleZoomIn} aria-label="Acercar">
+          <Plus />
+        </Button>
+        <Button size="icon" onClick={handleZoomOut} aria-label="Alejar">
+          <Minus />
+        </Button>
+        <Button size="icon" onClick={handleResetZoom} aria-label="Centrar vista">
+          <LocateFixed />
+        </Button>
+      </div>
     </Card>
   );
 }
-
-
-
-    
-
-    
