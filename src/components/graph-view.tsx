@@ -49,7 +49,10 @@ const GraphView = () => {
                 const companySystems = sistemas.filter(s => {
                     const systemAmbientes = ambientes.filter(a => a.sistemaId === s.id);
                     // Handle systems with no ambientes directly linked to company
-                    if(s.nombre === "CRM Interno" && node.data.nombre === "Caja Los Héroes") return true;
+                    const crmSystem = sistemas.find(s => s.nombre === "CRM Interno");
+                    const cajaCompany = companias.find(c => c.nombre === "Caja Los Héroes");
+
+                    if(s.id === crmSystem?.id && node.id === cajaCompany?.id) return true;
 
                     const systemAmbienteIds = systemAmbientes.map(a => a.id);
                     if (systemAmbienteIds.length === 0) return false;
@@ -281,14 +284,28 @@ const GraphView = () => {
 
     }, [allData, getNodeDetails]);
 
-    const downloadImage = () => {
+    const downloadImage = React.useCallback(async () => {
         const svgElement = svgRef.current;
         if (!svgElement) return;
 
         const { width, height } = svgElement.getBoundingClientRect();
         const transform = d3Zoom.zoomTransform(svgElement as any);
 
-        toPng(svgElement, {
+        const clonedSvgElement = svgElement.cloneNode(true) as SVGSVGElement;
+        
+        const originalNodes = d3Selection.select(svgElement).selectAll('.nodes g');
+        d3Selection.select(clonedSvgElement).selectAll('.nodes g').each(function(d, i) {
+            const originalNode = originalNodes.nodes()[i] as SVGGElement;
+            const circle = d3Selection.select(this).select('circle');
+            if (circle.node()) {
+                const originalCircle = d3Selection.select(originalNode).select('circle');
+                const fillColor = window.getComputedStyle(originalCircle.node()!).getPropertyValue('fill');
+                circle.style('fill', fillColor);
+            }
+        });
+
+
+        toPng(clonedSvgElement, {
             backgroundColor: '#ffffff',
             width: width,
             height: height,
@@ -305,7 +322,7 @@ const GraphView = () => {
         }).catch((error) => {
             console.error('oops, something went wrong!', error);
         });
-    };
+    }, []);
     
     const handleZoom = (scale: number) => {
         if (svgRef.current && zoomRef.current) {
@@ -352,4 +369,5 @@ const GraphViewWrapper = () => (
 
 export default GraphViewWrapper;
 
+    
     
