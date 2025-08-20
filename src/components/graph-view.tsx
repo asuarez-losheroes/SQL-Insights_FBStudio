@@ -46,37 +46,20 @@ const GraphView = () => {
         let details: { [key: string]: any } = {};
          switch (node.type) {
             case 'compania':
-                 const companySystems = sistemas.filter(s => {
-                    const systemAmbientes = ambientes.filter(a => a.sistemaId === s.id).map(a => a.id);
-                    if (systemAmbientes.length === 0) {
-                        // For systems like "CRM Interno" which has no ambientes.
-                        // We need a better way to link company to system.
-                        // A system should probably have a companyId.
-                        // As a workaround, we will check if any DB in the company links to this system.
-                        // This is complex. Let's assume a direct link for now if no dbs.
-                        // For "CRM Interno", it's in "Caja los Heroes"
-                        if (s.nombre === 'CRM Interno' && node.data.nombre === 'Caja Los Héroes') return true;
-                        return false;
-                    }
-                    const systemServidores = servidores.filter(srv => systemAmbientes.includes(srv.ambienteId)).map(srv => srv.id);
-                    const systemDBs = dbs.filter(db => systemServidores.includes(db.servidorId));
+                const companySystems = sistemas.filter(s => {
+                    const systemAmbientes = ambientes.filter(a => a.sistemaId === s.id);
+                    // Handle systems with no ambientes directly linked to company
+                    if(s.nombre === "CRM Interno" && node.data.nombre === "Caja Los Héroes") return true;
+
+                    const systemAmbienteIds = systemAmbientes.map(a => a.id);
+                    if (systemAmbienteIds.length === 0) return false;
+
+                    const systemServidores = servidores.filter(srv => systemAmbienteIds.includes(srv.ambienteId));
+                    const systemServerIds = systemServidores.map(srv => srv.id);
+                    const systemDBs = dbs.filter(db => systemServerIds.includes(db.servidorId));
                     return systemDBs.some(db => db.companiaId === node.id);
-                 });
-                 const companySystemsCount = new Set(
-                    dbs.filter(db => db.companiaId === node.id)
-                        .map(db => {
-                            const server = servidores.find(s => s.id === db.servidorId);
-                            const ambiente = ambientes.find(a => a.id === server?.ambienteId);
-                            return ambiente?.sistemaId;
-                        })
-                        .filter(Boolean)
-                 ).size;
-
-                 const crm = sistemas.find(s => s.nombre === "CRM Interno");
-                 const crmIsForThisCompany = crm && node.nombre === "Caja Los Héroes";
-                 const totalSystems = companySystemsCount + (crmIsForThisCompany ? 1: 0)
-
-                 details = { 'Sistemas': totalSystems };
+                });
+                details = { 'Sistemas': companySystems.length };
                 break;
              case 'sistema':
                 const criticidad = criticidades.find(c => c.id === node.data.criticidadId);
@@ -285,6 +268,10 @@ const GraphView = () => {
             }
             function dragended(event: d3.D3DragEvent<Element, CustomGraphNode, any>, d: CustomGraphNode) {
                 if (!event.active) simulation.alphaTarget(0);
+                 if (d) {
+                    d.fx = null;
+                    d.fy = null;
+                }
             }
             return d3Drag.drag<Element, CustomGraphNode>()
                 .on("start", dragstarted)
@@ -295,19 +282,29 @@ const GraphView = () => {
     }, [allData, getNodeDetails]);
 
     const downloadImage = () => {
-        if (svgRef.current) {
-            toPng(svgRef.current, {
-                backgroundColor: '#ffffff',
-                width: 1200,
-                height: 900,
-                skipFonts: true
-            }).then((dataUrl) => {
-                const a = document.createElement('a');
-                a.setAttribute('download', 'graph.png');
-                a.setAttribute('href', dataUrl);
-                a.click();
-            });
-        }
+        const svgElement = svgRef.current;
+        if (!svgElement) return;
+
+        const { width, height } = svgElement.getBoundingClientRect();
+        const transform = d3Zoom.zoomTransform(svgElement as any);
+
+        toPng(svgElement, {
+            backgroundColor: '#ffffff',
+            width: width,
+            height: height,
+            style: {
+                transform: `matrix(${transform.k}, 0, 0, ${transform.k}, ${transform.x}, ${transform.y})`,
+                transformOrigin: 'top left',
+            },
+            skipFonts: true,
+        }).then((dataUrl) => {
+            const a = document.createElement('a');
+            a.setAttribute('download', 'graph.png');
+            a.setAttribute('href', dataUrl);
+            a.click();
+        }).catch((error) => {
+            console.error('oops, something went wrong!', error);
+        });
     };
     
     const handleZoom = (scale: number) => {
@@ -328,7 +325,7 @@ const GraphView = () => {
   }
 
   return (
-    <Card className="w-full h-full relative">
+    <Card className="w-full h-full relative overflow-hidden">
        <svg ref={svgRef} className="w-full h-full"></svg>
        <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-2">
             <Button onClick={() => handleZoom(1.2)} variant="outline" size="icon" aria-label="Acercar">
