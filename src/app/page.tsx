@@ -1,11 +1,10 @@
 import {
-  DatabaseZap,
-  Home as HomeIcon,
   Settings,
   PanelLeft,
   Briefcase,
   GitGraph,
-  List
+  List,
+  Home
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -24,7 +23,6 @@ import {
 } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import DashboardClient from '@/components/dashboard-client';
-import { Toaster } from "@/components/ui/toaster"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import GraphView from '@/components/graph-view';
 
@@ -35,7 +33,7 @@ const navItems = [
     { href: "/admin/servidores", icon: Settings, label: "Infraestructura" },
 ]
 
-export default function Home() {
+export default function HomePage() {
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <aside className="fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex">
@@ -46,7 +44,7 @@ export default function Home() {
               className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
             >
               <Image src="/logo.svg" width={32} height={32} alt="Logo" />
-              <span className="sr-only">Perspectivas SQL</span>
+              <span className="sr-only">SQL Insights</span>
             </Link>
             
               <Tooltip>
@@ -55,7 +53,7 @@ export default function Home() {
                     href="/"
                     className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-accent-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
                   >
-                    <HomeIcon className="h-5 w-5" />
+                    <Home className="h-5 w-5" />
                     <span className="sr-only">Panel</span>
                   </Link>
                 </TooltipTrigger>
@@ -102,7 +100,7 @@ export default function Home() {
                           href="/"
                           className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
                       >
-                          <HomeIcon className="h-5 w-5" />
+                          <Home className="h-5 w-5" />
                           Panel Principal
                       </Link>
                       <p className="px-2.5 text-muted-foreground">Administración</p>
@@ -139,7 +137,6 @@ export default function Home() {
             </Tabs>
         </main>
       </div>
-      <Toaster />
     </div>
   );
 }
