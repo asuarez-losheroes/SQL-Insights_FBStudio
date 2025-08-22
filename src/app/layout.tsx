@@ -6,9 +6,6 @@ import { Toaster } from "@/components/ui/toaster"
 export const metadata: Metadata = {
   title: 'SQL Insights',
   description: 'Generado por Firebase Studio',
-  icons: {
-    icon: '/favicon.ico',
-  }
 };
 
 export default function RootLayout({

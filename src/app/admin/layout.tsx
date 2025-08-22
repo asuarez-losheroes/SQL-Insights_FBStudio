@@ -3,7 +3,6 @@
 
 import * as React from "react";
 import Link from "next/link";
-import Image from 'next/image';
 import { usePathname } from "next/navigation";
 import {
   Cog,
@@ -95,8 +94,8 @@ export default function AdminLayout({
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/" className="flex items-center gap-2 font-semibold">
-              <Image src="/logo.svg" width={32} height={32} alt="Logo" />
-              <span className="">Inicio</span>
+              <DatabaseZap className="h-6 w-6" />
+              <span className="">SQL Insights</span>
             </Link>
           </div>
           <div className="flex-1 overflow-y-auto">
@@ -135,10 +134,10 @@ export default function AdminLayout({
                   </SheetHeader>
                   <nav className="grid gap-6 text-lg font-medium mt-4">
                     <Link
-                      href="/"
+                      href="#"
                       className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
                     >
-                      <Image src="/logo.svg" width={40} height={40} alt="Logo" />
+                      <DatabaseZap className="h-5 w-5 transition-all group-hover:scale-110" />
                       <span className="sr-only">SQL Insights</span>
                     </Link>
                     <Link
