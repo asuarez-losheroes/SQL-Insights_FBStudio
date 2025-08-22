@@ -56,6 +56,8 @@ export default function ServidoresPage() {
   const { servidores, sistemasOperativos, ambientes, sistemas, tiposServidor, addRelationalData, updateRelationalData, deleteRelationalData } = useData();
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingServidor, setEditingServidor] = React.useState<Servidor | null>(null);
+  const [selectedSistema, setSelectedSistema] = React.useState<string | null>(null);
+
   const { toast } = useToast();
 
   const form = useForm<FormData>({
@@ -81,11 +83,14 @@ export default function ServidoresPage() {
   React.useEffect(() => {
     if (isDialogOpen) {
       if (editingServidor) {
+        const ambiente = ambientes.find(a => a.id === editingServidor.ambienteId);
+        setSelectedSistema(ambiente?.sistemaId || null);
         form.reset({
           ...editingServidor,
           discos: editingServidor.discos.map(d => ({...d, id: undefined})) // remove id for validation
         });
       } else {
+        setSelectedSistema(null);
         form.reset({
           nombre: "",
           ip: "",
@@ -101,7 +106,7 @@ export default function ServidoresPage() {
         form.setFocus("nombre");
       }, 100);
     }
-  }, [editingServidor, isDialogOpen, form]);
+  }, [editingServidor, isDialogOpen, form, ambientes]);
 
 
   const handleCreate = () => {
@@ -145,6 +150,16 @@ export default function ServidoresPage() {
         sistemaName: sistema?.nombre || 'Desconocido'
     }
   }
+  
+  const handleSistemaChange = (sistemaId: string) => {
+    setSelectedSistema(sistemaId);
+    form.setValue('ambienteId', ''); // Reset ambiente selection
+  };
+
+  const filteredAmbientes = React.useMemo(() => {
+    if (!selectedSistema) return [];
+    return ambientes.filter(a => a.sistemaId === selectedSistema);
+  }, [selectedSistema, ambientes]);
 
   return (
     <Card>
@@ -280,32 +295,45 @@ export default function ServidoresPage() {
                 />
 
                 <div className="grid grid-cols-2 gap-4">
+                    <FormItem>
+                      <FormLabel>Sistema</FormLabel>
+                      <Select onValueChange={handleSistemaChange} value={selectedSistema || ''}>
+                          <FormControl>
+                              <SelectTrigger>
+                                  <SelectValue placeholder="1. Selecciona un Sistema" />
+                              </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                              {sistemas.map(s => (
+                                  <SelectItem key={s.id} value={s.id}>{s.nombre}</SelectItem>
+                              ))}
+                          </SelectContent>
+                      </Select>
+                    </FormItem>
                     <FormField
-                    control={form.control}
-                    name="ambienteId"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Ambiente</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                                <SelectTrigger>
-                                <SelectValue placeholder="Selecciona un Ambiente" />
-                                </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                {sistemas.map(sistema => (
-                                    <optgroup key={sistema.id} label={sistema.nombre}>
-                                        {ambientes.filter(a => a.sistemaId === sistema.id).map(a => (
-                                            <SelectItem key={a.id} value={a.id}>{a.nombre}</SelectItem>
-                                        ))}
-                                    </optgroup>
-                                ))}
-                            </SelectContent>
-                            </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
+                      control={form.control}
+                      name="ambienteId"
+                      render={({ field }) => (
+                          <FormItem>
+                          <FormLabel>Ambiente</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value} disabled={!selectedSistema}>
+                              <FormControl>
+                                  <SelectTrigger>
+                                      <SelectValue placeholder="2. Selecciona un Ambiente" />
+                                  </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                  {filteredAmbientes.map(a => (
+                                      <SelectItem key={a.id} value={a.id}>{a.nombre}</SelectItem>
+                                  ))}
+                              </SelectContent>
+                              </Select>
+                          <FormMessage />
+                          </FormItem>
+                      )}
                     />
+                </div>
+                 <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="tipoServidorId"
@@ -328,29 +356,27 @@ export default function ServidoresPage() {
                           </FormItem>
                       )}
                     />
-                </div>
-                 <div className="grid grid-cols-2 gap-4">
                     <FormField
-                    control={form.control}
-                    name="sistemaOperativoId"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Sistema Operativo</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                                <SelectTrigger>
-                                <SelectValue placeholder="Selecciona un S.O." />
-                                </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                {sistemasOperativos.map(so => (
-                                <SelectItem key={so.id} value={so.id}>{so.nombre}</SelectItem>
-                                ))}
-                            </SelectContent>
-                            </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
+                      control={form.control}
+                      name="sistemaOperativoId"
+                      render={({ field }) => (
+                          <FormItem>
+                          <FormLabel>Sistema Operativo</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                  <SelectTrigger>
+                                  <SelectValue placeholder="Selecciona un S.O." />
+                                  </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                  {sistemasOperativos.map(so => (
+                                  <SelectItem key={so.id} value={so.id}>{so.nombre}</SelectItem>
+                                  ))}
+                              </SelectContent>
+                              </Select>
+                          <FormMessage />
+                          </FormItem>
+                      )}
                     />
                 </div>
 
