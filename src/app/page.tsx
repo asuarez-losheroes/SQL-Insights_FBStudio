@@ -41,7 +41,7 @@ export default function HomePage() {
           <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
             <Link
               href="/"
-              className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
+              className="flex items-center justify-center"
             >
               <Image src="/logo.svg" width={32} height={32} alt="Logo" />
               <span className="sr-only">SQL Insights</span>
@@ -91,7 +91,7 @@ export default function HomePage() {
                   <nav className="grid gap-6 text-lg font-medium mt-4">
                       <Link
                           href="/"
-                          className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
+                          className="flex items-center justify-center"
                       >
                           <Image src="/logo.svg" width={40} height={40} alt="Logo" />
                           <span className="sr-only">SQL Insights</span>
