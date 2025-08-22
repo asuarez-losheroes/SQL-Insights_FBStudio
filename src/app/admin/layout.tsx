@@ -21,7 +21,8 @@ import {
   Network,
   ShieldCheck,
   Tag,
-  Briefcase
+  Briefcase,
+  FolderTree
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ResizableBox } from 'react-resizable';
@@ -42,6 +43,7 @@ const navItems = [
   { href: "/admin/criticidades", icon: ShieldCheck, label: "Criticidades" },
   { href: "/admin/tipos-sistema", icon: Tag, label: "Tipos de Sistema" },
   { href: "/admin/servidores", icon: Server, label: "Servidores" },
+  { href: "/admin/tipos-servidor", icon: FolderTree, label: "Tipos de Servidor" },
   { href: "/admin/sistemas-operativos", icon: Laptop, label: "Sistemas Operativos" },
   { href: "/admin/motores", icon: Cog, label: "Motores de BD" },
   { href: "/admin/ediciones", icon: BookCopy, label: "Ediciones" },

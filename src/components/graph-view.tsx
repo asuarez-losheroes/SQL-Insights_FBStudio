@@ -6,7 +6,7 @@ import { useData } from '@/context/data-context';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import { Download, Focus, Minus, Plus } from 'lucide-react';
+import { Download, Focus, Minus, Plus, Server, Database, Layers, Folder } from 'lucide-react';
 import * as d3Selection from 'd3-selection';
 import * as d3Zoom from 'd3-zoom';
 import * as d3Drag from 'd3-drag';
@@ -34,11 +34,21 @@ const getNodeColor = (type: string) => {
   return NODE_COLORS[type] || NODE_COLORS.default;
 };
 
+const getServerIcon = (tipoServidorId: string) => {
+    switch (tipoServidorId) {
+        case 'ts-db': return <Database className="w-4 h-4 text-white" />;
+        case 'ts-app': return <Layers className="w-4 h-4 text-white" />;
+        case 'ts-file': return <Folder className="w-4 h-4 text-white" />;
+        default: return <Server className="w-4 h-4 text-white" />;
+    }
+}
+
+
 // --- Main Component ---
 
 const GraphView = () => {
     const allData = useData();
-    const { companias, sistemas, ambientes, servidores, databases: dbs, criticidades, tiposSistema, sistemasOperativos, motores } = allData;
+    const { companias, sistemas, ambientes, servidores, databases: dbs, criticidades, tiposSistema, sistemasOperativos, motores, tiposServidor } = allData;
     const svgRef = React.useRef<SVGSVGElement>(null);
     const zoomRef = React.useRef<d3Zoom.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
 
@@ -48,19 +58,19 @@ const GraphView = () => {
             case 'compania':
                 const companySystems = sistemas.filter(s => {
                     const systemAmbientes = ambientes.filter(a => a.sistemaId === s.id);
-                    // Handle systems with no ambientes directly linked to company
+                     if (systemAmbientes.length > 0) {
+                        const systemAmbienteIds = systemAmbientes.map(a => a.id);
+                        const systemServidores = servidores.filter(srv => systemAmbienteIds.includes(srv.ambienteId));
+                        const systemServerIds = systemServidores.map(srv => srv.id);
+                        const systemDBs = dbs.filter(db => systemServerIds.includes(db.servidorId));
+                        return systemDBs.some(db => db.companiaId === node.id);
+                    }
                     const crmSystem = sistemas.find(s => s.nombre === "CRM Interno");
                     const cajaCompany = companias.find(c => c.nombre === "Caja Los Héroes");
-
-                    if(s.id === crmSystem?.id && node.id === cajaCompany?.id) return true;
-
-                    const systemAmbienteIds = systemAmbientes.map(a => a.id);
-                    if (systemAmbienteIds.length === 0) return false;
-
-                    const systemServidores = servidores.filter(srv => systemAmbienteIds.includes(srv.ambienteId));
-                    const systemServerIds = systemServidores.map(srv => srv.id);
-                    const systemDBs = dbs.filter(db => systemServerIds.includes(db.servidorId));
-                    return systemDBs.some(db => db.companiaId === node.id);
+                    if (s.id === crmSystem?.id && node.id === cajaCompany?.id) {
+                        return true;
+                    }
+                    return false;
                 });
                 details = { 'Sistemas': companySystems.length };
                 break;
@@ -69,14 +79,18 @@ const GraphView = () => {
                 details = { 'Tipo': getRelationName(node.data.tipoSistemaId, tiposSistema), 'Criticidad': <Badge variant={criticidad?.nombre === 'Alta' ? 'destructive' : 'secondary'}>{criticidad?.nombre || 'N/A'}</Badge> };
                 break;
              case 'servidor':
-                details = { 'IP': node.data.ip, 'S.O.': getRelationName(node.data.sistemaOperativoId, sistemasOperativos) };
+                details = { 
+                    'Tipo': getRelationName(node.data.tipoServidorId, tiposServidor),
+                    'IP': node.data.ip, 
+                    'S.O.': getRelationName(node.data.sistemaOperativoId, sistemasOperativos) 
+                };
                 break;
             case 'database':
                 details = { 'Motor': getRelationName(node.data.motorId, motores), 'Crítica': <Badge variant={node.data.critico ? 'destructive' : 'secondary'}>{node.data.critico ? 'Si' : 'No'}</Badge> };
                 break;
         }
         return details;
-    }, [sistemas, dbs, servidores, ambientes, criticidades, tiposSistema, sistemasOperativos, motores, companias]);
+    }, [sistemas, dbs, servidores, ambientes, criticidades, tiposSistema, sistemasOperativos, motores, companias, tiposServidor]);
 
 
     React.useEffect(() => {
@@ -112,26 +126,23 @@ const GraphView = () => {
             }
         };
 
-        // Connect DBs to their company's system
         dbs.forEach(db => {
-            const server = servidores.find(s => s.id === db.servidorId);
-            const ambiente = ambientes.find(a => a.id === server?.ambienteId);
-            if (ambiente?.sistemaId && db.companiaId) {
-                // This creates a link between company and system through the DB
-                addEdge(db.companiaId, ambiente.sistemaId);
+            if (db.servidorId) addEdge(db.servidorId, db.id!);
+            if (db.companiaId) {
+                 const server = servidores.find(s => s.id === db.servidorId);
+                 const ambiente = ambientes.find(a => a.id === server?.ambienteId);
+                 if (ambiente?.sistemaId) {
+                     addEdge(db.companiaId, ambiente.sistemaId);
+                 }
             }
         });
         
-        // Explicitly connect "CRM Interno" to "Caja Los Héroes"
         const crmSystem = sistemas.find(s => s.nombre === "CRM Interno");
         const cajaCompany = companias.find(c => c.nombre === "Caja Los Héroes");
         if (crmSystem?.id && cajaCompany?.id) {
             addEdge(cajaCompany.id, crmSystem.id);
         }
 
-        dbs.forEach(db => {
-            if(db.servidorId) addEdge(db.servidorId, db.id!);
-        });
         servidores.forEach(s => {
             if(s.ambienteId) addEdge(s.ambienteId, s.id!);
         });
@@ -189,7 +200,6 @@ const GraphView = () => {
                 tooltip.transition().duration(200).style("opacity", .9);
                 const details = getNodeDetails(d);
                 const detailsHtml = Object.entries(details).map(([key, value]) => {
-                    // Check if value is a react element
                     if (React.isValidElement(value)) {
                        return `<div><strong>${key}:</strong> ${ReactDOMServer.renderToStaticMarkup(value)}</div>`;
                     }
@@ -213,6 +223,19 @@ const GraphView = () => {
         node.append("circle")
             .attr("r", calculateRadius)
             .attr("fill", d => getNodeColor(d.type));
+
+        node.each(function(d) {
+            if (d.type === 'servidor') {
+                const icon = getServerIcon(d.data.tipoServidorId);
+                d3Selection.select(this)
+                    .append('foreignObject')
+                    .attr('width', 24)
+                    .attr('height', 24)
+                    .attr('x', -12)
+                    .attr('y', -35)
+                    .html(ReactDOMServer.renderToStaticMarkup(icon));
+            }
+        });
             
         node.append("text")
             .text(d => d.label)
@@ -368,6 +391,3 @@ const GraphViewWrapper = () => (
 );
 
 export default GraphViewWrapper;
-
-    
-    

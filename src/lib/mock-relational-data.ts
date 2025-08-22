@@ -1,6 +1,6 @@
 import { 
     Servidor, Motor, Edicion, Licencia, Ambiente, Ubicacion, GrupoSoporte, 
-    EstadoOperativo, Compania, SistemaOperativo, Sistema, Criticidad, TipoSistema 
+    EstadoOperativo, Compania, SistemaOperativo, Sistema, Criticidad, TipoSistema, TipoServidor
 } from "@/lib/relational-schema";
 
 export const mockCriticidades: Criticidad[] = [
@@ -55,6 +55,13 @@ export const mockAmbientes: Ambiente[] = [
   { id: "amb-app-staging", sistemaId: "sis-002", nombre: "Staging", descripcion: "Ambiente pre-productivo para la app móvil.", urlAcceso: "https://staging-api.example.com" },
 ];
 
+export const mockTiposServidor: TipoServidor[] = [
+    { id: "ts-db", nombre: "Base de Datos" },
+    { id: "ts-app", nombre: "Aplicaciones" },
+    { id: "ts-file", nombre: "Archivos" },
+    { id: "ts-proc", nombre: "Procesos" },
+];
+
 export const mockSistemasOperativos: SistemaOperativo[] = [
   { id: "so-001", nombre: "Windows Server 2016" },
   { id: "so-002", nombre: "Windows Server 2019" },
@@ -68,6 +75,7 @@ export const mockServidores: Servidor[] = [
     id: "srv-001", 
     nombre: "PROD-BANTOTAL-DB-01",
     ip: "10.10.1.10",
+    tipoServidorId: "ts-db", // Base de Datos
     sistemaOperativoId: "so-002",
     ambienteId: "amb-bt-prod", // Producción de Bantotal
     cpu: 16,
@@ -81,6 +89,7 @@ export const mockServidores: Servidor[] = [
     id: "srv-002", 
     nombre: "QA-BANTOTAL-DB-01",
     ip: "10.20.1.10",
+    tipoServidorId: "ts-db", // Base de Datos
     sistemaOperativoId: "so-003",
     ambienteId: "amb-bt-qa", // QA de Bantotal
     cpu: 8,
@@ -93,6 +102,7 @@ export const mockServidores: Servidor[] = [
     id: "srv-003", 
     nombre: "PROD-API-APP-01",
     ip: "10.10.2.20",
+    tipoServidorId: "ts-app", // Aplicaciones
     sistemaOperativoId: "so-004", // Linux
     ambienteId: "amb-app-prod", // Producción de App Móvil
     cpu: 8,

@@ -4,18 +4,18 @@
 import * as React from "react";
 import {
   Servidor, Motor, Edicion, Licencia, Ambiente, Ubicacion, GrupoSoporte,
-  EstadoOperativo, Compania, SistemaOperativo, Sistema, Criticidad, TipoSistema
+  EstadoOperativo, Compania, SistemaOperativo, Sistema, Criticidad, TipoSistema, TipoServidor
 } from "@/lib/relational-schema";
 import { DatabaseFormValues } from "@/lib/schema";
 import {
   mockServidores, mockMotores, mockEdiciones, mockLicencias, mockAmbientes,
   mockUbicaciones, mockGruposSoporte, mockEstadosOperativos, mockCompanias,
-  mockSistemasOperativos, mockSistemas, mockCriticidades, mockTiposSistema
+  mockSistemasOperativos, mockSistemas, mockCriticidades, mockTiposSistema, mockTiposServidor
 } from "@/lib/mock-relational-data";
 import { mockDatabases } from "@/lib/mock-data";
 
 
-type RelationalData = Servidor | Motor | Edicion | Licencia | Ambiente | Ubicacion | GrupoSoporte | EstadoOperativo | Compania | SistemaOperativo | Sistema | Criticidad | TipoSistema | DatabaseFormValues;
+type RelationalData = Servidor | Motor | Edicion | Licencia | Ambiente | Ubicacion | GrupoSoporte | EstadoOperativo | Compania | SistemaOperativo | Sistema | Criticidad | TipoSistema | DatabaseFormValues | TipoServidor;
 
 type DataContextType = {
   // Nuevas entidades
@@ -23,6 +23,7 @@ type DataContextType = {
   criticidades: Criticidad[];
   tiposSistema: TipoSistema[];
   ambientes: Ambiente[];
+  tiposServidor: TipoServidor[];
 
   // Entidades existentes
   servidores: Servidor[];
@@ -76,6 +77,7 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
   const [criticidades, setCriticidades] = React.useState(mockCriticidades);
   const [tiposSistema, setTiposSistema] = React.useState(mockTiposSistema);
   const [ambientes, setAmbientes] = React.useState(mockAmbientes);
+  const [tiposServidor, setTiposServidor] = React.useState(mockTiposServidor);
 
   // Estados existentes
   const [servidores, setServidores] = React.useState(mockServidores);
@@ -93,6 +95,7 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     sistemas: setSistemas,
     criticidades: setCriticidades,
     tiposSistema: setTiposSistema,
+    tiposServidor: setTiposServidor,
     ambientes: setAmbientes,
     servidores: setServidores,
     motores: setMotores,
@@ -110,6 +113,7 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     sistemas: 'sis',
     criticidades: 'crit',
     tiposSistema: 'tipo',
+    tiposServidor: 'tsrv',
     ambientes: 'amb',
     servidores: 'srv',
     motores: 'mot',
@@ -150,6 +154,7 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     criticidades,
     tiposSistema,
     ambientes,
+    tiposServidor,
     servidores,
     motores,
     ediciones,
@@ -175,4 +180,3 @@ export const useData = () => {
   }
   return context;
 };
-

@@ -53,7 +53,7 @@ import { Badge } from "@/components/ui/badge";
 type FormData = z.infer<typeof servidorSchema>;
 
 export default function ServidoresPage() {
-  const { servidores, sistemasOperativos, ambientes, sistemas, addRelationalData, updateRelationalData, deleteRelationalData } = useData();
+  const { servidores, sistemasOperativos, ambientes, sistemas, tiposServidor, addRelationalData, updateRelationalData, deleteRelationalData } = useData();
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingServidor, setEditingServidor] = React.useState<Servidor | null>(null);
   const { toast } = useToast();
@@ -64,6 +64,7 @@ export default function ServidoresPage() {
     defaultValues: {
       nombre: "",
       ip: "",
+      tipoServidorId: "",
       sistemaOperativoId: "",
       ambienteId: "",
       cpu: 1,
@@ -88,6 +89,7 @@ export default function ServidoresPage() {
         form.reset({
           nombre: "",
           ip: "",
+          tipoServidorId: "",
           sistemaOperativoId: "",
           ambienteId: "",
           cpu: 1,
@@ -150,7 +152,7 @@ export default function ServidoresPage() {
         <div className="flex justify-between items-center">
           <div>
             <CardTitle>Servidores</CardTitle>
-            <CardDescription>Administra los servidores de bases de datos.</CardDescription>
+            <CardDescription>Administra la infraestructura de servidores.</CardDescription>
           </div>
           <div className="flex gap-2">
             <Link href="/" passHref>
@@ -173,6 +175,7 @@ export default function ServidoresPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Nombre</TableHead>
+              <TableHead>Tipo</TableHead>
               <TableHead>Dirección IP</TableHead>
               <TableHead>Sistema / Ambiente</TableHead>
               <TableHead>Sistema Operativo</TableHead>
@@ -190,6 +193,7 @@ export default function ServidoresPage() {
                 return (
                     <TableRow key={servidor.id}>
                         <TableCell className="font-medium">{servidor.nombre}</TableCell>
+                        <TableCell>{tiposServidor.find(ts => ts.id === servidor.tipoServidorId)?.nombre || 'Desconocido'}</TableCell>
                         <TableCell>{servidor.ip}</TableCell>
                         <TableCell>
                             <div>{sistemaName}</div>
@@ -302,6 +306,30 @@ export default function ServidoresPage() {
                         </FormItem>
                     )}
                     />
+                    <FormField
+                      control={form.control}
+                      name="tipoServidorId"
+                      render={({ field }) => (
+                          <FormItem>
+                          <FormLabel>Tipo de Servidor</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                  <SelectTrigger>
+                                  <SelectValue placeholder="Selecciona un Tipo" />
+                                  </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                  {tiposServidor.map(ts => (
+                                  <SelectItem key={ts.id} value={ts.id}>{ts.nombre}</SelectItem>
+                                  ))}
+                              </SelectContent>
+                              </Select>
+                          <FormMessage />
+                          </FormItem>
+                      )}
+                    />
+                </div>
+                 <div className="grid grid-cols-2 gap-4">
                     <FormField
                     control={form.control}
                     name="sistemaOperativoId"

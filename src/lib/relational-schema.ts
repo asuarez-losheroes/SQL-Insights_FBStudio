@@ -9,6 +9,7 @@ export const relationalSchema = z.object({
 // Nuevas entidades para el modelo centrado en Sistemas
 export const criticidadSchema = relationalSchema;
 export const tipoSistemaSchema = relationalSchema;
+export const tipoServidorSchema = relationalSchema; // Nuevo catálogo
 
 export const sistemaSchema = z.object({
     id: z.string().optional(),
@@ -46,6 +47,7 @@ export const servidorSchema = z.object({
   id: z.string().optional(),
   nombre: z.string().min(1, "El nombre es requerido."),
   ip: z.string().ip({ message: "Dirección IP inválida." }),
+  tipoServidorId: z.string().min(1, "El tipo de servidor es requerido."), // Nuevo campo
   sistemaOperativoId: z.string().min(1, "El sistema operativo es requerido."),
   ambienteId: z.string().min(1, "El ambiente es requerido."), // Se enlaza al nuevo ambiente de sistema
   cpu: z.number().int().positive("La cantidad de CPU es requerida."),
@@ -78,6 +80,7 @@ export type Sistema = z.infer<typeof sistemaSchema>;
 export type Criticidad = z.infer<typeof criticidadSchema>;
 export type TipoSistema = z.infer<typeof tipoSistemaSchema>;
 export type Ambiente = z.infer<typeof ambienteSchema>;
+export type TipoServidor = z.infer<typeof tipoServidorSchema>; // Nuevo tipo
 
 export type Disco = z.infer<typeof discoSchema>;
 export type Servidor = z.infer<typeof servidorSchema>;
