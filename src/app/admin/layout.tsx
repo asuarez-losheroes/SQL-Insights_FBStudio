@@ -3,6 +3,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from 'next/image';
 import { usePathname } from "next/navigation";
 import {
   Cog,
@@ -137,7 +138,7 @@ export default function AdminLayout({
                       href="/"
                       className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
                     >
-                      <DatabaseZap className="h-5 w-5 transition-all group-hover:scale-110" />
+                      <Image src="/logo.svg" width={40} height={40} alt="Logo" />
                       <span className="sr-only">SQL Insights</span>
                     </Link>
                     <Link

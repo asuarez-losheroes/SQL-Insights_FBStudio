@@ -8,6 +8,7 @@ import {
   List
 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Tooltip,
   TooltipContent,
@@ -44,7 +45,7 @@ export default function Home() {
               href="/"
               className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
             >
-              <DatabaseZap className="h-4 w-4 transition-all group-hover:scale-110" />
+              <Image src="/logo.svg" width={32} height={32} alt="Logo" />
               <span className="sr-only">Perspectivas SQL</span>
             </Link>
             
@@ -94,7 +95,7 @@ export default function Home() {
                           href="/"
                           className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
                       >
-                          <DatabaseZap className="h-5 w-5 transition-all group-hover:scale-110" />
+                          <Image src="/logo.svg" width={40} height={40} alt="Logo" />
                           <span className="sr-only">SQL Insights</span>
                       </Link>
                        <Link
